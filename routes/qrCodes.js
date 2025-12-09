@@ -20,7 +20,7 @@ router.route('/')
   .post(protect, createQRCode);
 
 router.route('/:id')
-  .get(protect, getQRCode)
+  .get(getQRCode)  // Make public so scan redirect can fetch QR data
   .put(protect, updateQRCode)
   .delete(protect, deleteQRCode);
 

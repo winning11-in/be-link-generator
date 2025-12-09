@@ -17,7 +17,7 @@ const scanSchema = new mongoose.Schema(
       version: String,
     },
     device: {
-      type: String,
+      type: { type: String },
       vendor: String,
       model: String,
     },
