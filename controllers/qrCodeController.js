@@ -1,6 +1,6 @@
 import QRCode from '../models/QRCode.js';
 import Scan from '../models/Scan.js';
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
 
 // @desc    Create new QR code
