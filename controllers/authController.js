@@ -82,3 +82,28 @@ export const getProfile = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get current user (me)
+// @route   GET /api/auth/me
+// @access  Private
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+
+    if (user) {
+      res.json({
+        success: true,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          createdAt: user.createdAt,
+        },
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
