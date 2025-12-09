@@ -54,11 +54,6 @@ export const getQRCode = async (req, res) => {
       return res.status(404).json({ success: false, message: 'QR code not found' });
     }
 
-    // Make sure user owns this QR code
-    if (qrCode.user.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
-    }
-
     res.json({
       success: true,
       qrCode,
