@@ -10,35 +10,23 @@ const qrCodeSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['url', 'text', 'email', 'wifi'],
+      enum: ['url', 'text', 'email', 'phone'],
     },
-    content: {
+    data: {
       type: String,
       required: true,
     },
-    // WiFi specific fields
-    wifiSSID: {
-      type: String,
-    },
-    wifiPassword: {
-      type: String,
-    },
-    wifiEncryption: {
-      type: String,
-      enum: ['WPA', 'WEP', 'nopass'],
-    },
-    // QR Code settings
-    size: {
-      type: Number,
-      default: 256,
-    },
-    // Metadata
     title: {
       type: String,
+      required: true,
     },
-    scans: {
+    scanCount: {
       type: Number,
       default: 0,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   {

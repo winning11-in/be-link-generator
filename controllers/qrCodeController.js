@@ -8,16 +8,12 @@ import geoip from 'geoip-lite';
 // @access  Private
 export const createQRCode = async (req, res) => {
   try {
-    const { type, content, wifiSSID, wifiPassword, wifiEncryption, size, title } = req.body;
+    const { type, data, title } = req.body;
 
     const qrCode = await QRCode.create({
       user: req.user._id,
       type,
-      content,
-      wifiSSID,
-      wifiPassword,
-      wifiEncryption,
-      size,
+      data,
       title,
     });
 
@@ -187,12 +183,12 @@ export const incrementScan = async (req, res) => {
     });
 
     // Increment scan count
-    qrCode.scans += 1;
+    qrCode.scanCount += 1;
     await qrCode.save();
 
     res.json({
       success: true,
-      scans: qrCode.scans,
+      scanCount: qrCode.scanCount,
       scanId: scan._id,
     });
   } catch (error) {
