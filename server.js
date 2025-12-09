@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import qrCodeRoutes from './routes/qrCodes.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -18,6 +19,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/qrcodes', qrCodeRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
