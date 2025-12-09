@@ -7,6 +7,10 @@ import {
   deleteQRCode,
   incrementScan,
 } from '../controllers/qrCodeController.js';
+import {
+  getQRCodeScans,
+  getQRCodeAnalytics,
+} from '../controllers/scanController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -20,6 +24,11 @@ router.route('/:id')
   .put(protect, updateQRCode)
   .delete(protect, deleteQRCode);
 
-router.put('/:id/scan', incrementScan);
+// Scan tracking (public endpoint)
+router.post('/:id/scan', incrementScan);
+
+// Analytics endpoints (protected)
+router.get('/:id/scans', protect, getQRCodeScans);
+router.get('/:id/analytics', protect, getQRCodeAnalytics);
 
 export default router;

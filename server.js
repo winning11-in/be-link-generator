@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import qrCodeRoutes from './routes/qrCodes.js';
+import scanRoutes from './routes/scans.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -20,6 +21,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/qrcodes', qrCodeRoutes);
+app.use('/api/scans', scanRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
