@@ -10,7 +10,7 @@ const qrCodeSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['url', 'text', 'email', 'phone'],
+      enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi'],
     },
     data: {
       type: String,
@@ -27,6 +27,20 @@ const qrCodeSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    // QR Customization
+    customization: {
+      qrColor: { type: String, default: '#000000' },
+      bgColor: { type: String, default: '#ffffff' },
+      qrSize: { type: Number, default: 256 },
+      errorLevel: { type: String, enum: ['L', 'M', 'Q', 'H'], default: 'M' },
+      dotStyle: { type: String, default: 'square' },
+      cornerSquareStyle: { type: String, default: 'square' },
+      cornerDotStyle: { type: String, default: 'square' },
+      logo: { type: String, default: null },
+      logoSize: { type: Number, default: 50 },
+      logoPadding: { type: Number, default: 5 },
+      removeBackground: { type: Boolean, default: true },
     },
   },
   {
