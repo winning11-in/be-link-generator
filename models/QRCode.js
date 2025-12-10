@@ -28,6 +28,10 @@ const qrCodeSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    previewImage: {
+      type: String,
+      default: null,
+    },
     // QR Customization
     customization: {
       qrColor: { type: String, default: '#000000' },
