@@ -10,7 +10,7 @@ const qrCodeSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi'],
+      enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi', 'vcard', 'instagram', 'facebook', 'youtube', 'whatsapp'],
     },
     data: {
       type: String,
@@ -31,7 +31,11 @@ const qrCodeSchema = new mongoose.Schema(
     // QR Customization
     customization: {
       qrColor: { type: String, default: '#000000' },
+      qrColorGradient: { type: Object, default: null },
       bgColor: { type: String, default: '#ffffff' },
+      bgColorGradient: { type: Object, default: null },
+      bgImage: { type: String, default: null },
+      bgImageOpacity: { type: Number, default: 1 },
       qrSize: { type: Number, default: 256 },
       errorLevel: { type: String, enum: ['L', 'M', 'Q', 'H'], default: 'M' },
       dotStyle: { type: String, default: 'square' },
@@ -41,6 +45,12 @@ const qrCodeSchema = new mongoose.Schema(
       logoSize: { type: Number, default: 50 },
       logoPadding: { type: Number, default: 5 },
       removeBackground: { type: Boolean, default: true },
+      margin: { type: Number, default: 10 },
+      frameOptions: { type: Object, default: null },
+      shadow: { type: Boolean, default: false },
+      shadowColor: { type: String, default: '#000000' },
+      shadowBlur: { type: Number, default: 0 },
+      borderRadius: { type: Number, default: 0 },
     },
   },
   {
