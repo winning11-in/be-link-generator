@@ -9,7 +9,10 @@
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "server.js"
+      "dest": "server.js",
+      "headers": {
+        "x-vercel-payload-limit": "20mb"
+      }
     }
   ],
   "functions": {
@@ -17,6 +20,9 @@
       "maxDuration": 10,
       "memory": 1024
     }
+  },
+  "limits": {
+    "maxRequestBodySize": "20mb"
   },
   "env": {
         "PORT": "5000",
