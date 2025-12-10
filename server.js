@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import qrCodeRoutes from './routes/qrCodes.js';
 import scanRoutes from './routes/scans.js';
-import templateRoutes from './routes/templates.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -28,7 +27,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/qrcodes', qrCodeRoutes);
 app.use('/api/scans', scanRoutes);
-app.use('/api/templates', templateRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
