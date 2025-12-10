@@ -27,6 +27,7 @@ export const signup = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
     } else {
@@ -52,6 +53,7 @@ export const signin = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        isAdmin: user.isAdmin,
         token: generateToken(user._id),
       });
     } else {
@@ -97,6 +99,7 @@ export const getCurrentUser = async (req, res) => {
           _id: user._id,
           name: user.name,
           email: user.email,
+          isAdmin: user.isAdmin,
           createdAt: user.createdAt,
         },
       });
