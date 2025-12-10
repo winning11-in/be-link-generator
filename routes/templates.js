@@ -9,7 +9,7 @@ import {
   getTemplatesByCategory,
   incrementTemplateUsage,
 } from '../controllers/templateController.js';
-import { verifyToken } from '../middleware/auth.js';
+import { protect } from '../middleware/auth.js';
 import { adminMiddleware } from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
@@ -21,11 +21,11 @@ router.get('/:id', getTemplateById);
 router.post('/:id/usage', incrementTemplateUsage);
 
 // Protected routes (Admin only)
-router.post('/', verifyToken, adminMiddleware, createTemplate);
-router.put('/:id', verifyToken, adminMiddleware, updateTemplate);
-router.delete('/:id', verifyToken, adminMiddleware, deleteTemplate);
+router.post('/', protect, adminMiddleware, createTemplate);
+router.put('/:id', protect, adminMiddleware, updateTemplate);
+router.delete('/:id', protect, adminMiddleware, deleteTemplate);
 
 // Admin management route
-router.get('/admin/all', verifyToken, adminMiddleware, getAdminTemplates);
+router.get('/admin/all', protect, adminMiddleware, getAdminTemplates);
 
 export default router;
