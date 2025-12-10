@@ -1,5 +1,6 @@
 import express from 'express';
-import { protect, admin } from '../middleware/auth.js';
+import { protect } from '../middleware/auth.js';
+import { adminMiddleware } from '../middleware/adminMiddleware.js';
 import {
   createContact,
   getAllContacts,
@@ -10,8 +11,8 @@ import {
 const router = express.Router();
 
 router.post('/', createContact);
-router.get('/', protect, admin, getAllContacts);
-router.put('/:id', protect, admin, updateContactStatus);
-router.delete('/:id', protect, admin, deleteContact);
+router.get('/', protect, adminMiddleware, getAllContacts);
+router.put('/:id', protect, adminMiddleware, updateContactStatus);
+router.delete('/:id', protect, adminMiddleware, deleteContact);
 
 export default router;
