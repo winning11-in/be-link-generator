@@ -8,14 +8,15 @@ import geoip from 'geoip-lite';
 // @access  Private
 export const createQRCode = async (req, res) => {
   try {
-    const { type, data, title, customization, previewImage } = req.body;
+    const { type, content, name, template, styling, previewImage } = req.body;
 
     const qrCode = await QRCode.create({
       user: req.user._id,
       type,
-      data,
-      title,
-      customization,
+      content,
+      name,
+      template,
+      styling,
       previewImage,
     });
 
