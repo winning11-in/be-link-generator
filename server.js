@@ -1,10 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/auth.js';
 import qrCodeRoutes from './routes/qrCodes.js';
 import scanRoutes from './routes/scans.js';
 import contactRoutes from './routes/contacts.js';
+import uploadsRoutes from './routes/uploads.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -31,6 +33,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/qrcodes', qrCodeRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/contacts', contactRoutes);
+app.use('/api/uploads', uploadsRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check
 app.get('/api/health', (req, res) => {
