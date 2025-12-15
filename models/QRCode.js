@@ -12,11 +12,13 @@ const qrCodeSchema = new mongoose.Schema(
       required: true,
       enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi', 'vcard', 'instagram', 'facebook', 'youtube', 'whatsapp'],
     },
-    data: {
+    // The actual QR code content/data
+    content: {
       type: String,
       required: true,
     },
-    title: {
+    // Display name for the QR code
+    name: {
       type: String,
       required: true,
     },
@@ -24,37 +26,51 @@ const qrCodeSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
     previewImage: {
       type: String,
       default: null,
     },
-    // QR Customization
-    customization: {
-      qrColor: { type: String, default: '#000000' },
-      qrColorGradient: { type: Object, default: null },
+    // Card Template Configuration
+    template: {
+      id: { type: String, default: 'professional-dark' },
+      name: { type: String, default: 'Professional Dark' },
+      backgroundColor: { type: String, default: '#1a1a2e' },
+      textColor: { type: String, default: '#ffffff' },
+      title: { type: String, default: 'Scan Me' },
+      subtitle: { type: String, default: 'Scan to connect' },
+      titleFontSize: { type: Number, default: 24 },
+      subtitleFontSize: { type: Number, default: 14 },
+      titleFontWeight: { type: String, enum: ['normal', 'medium', 'semibold', 'bold'], default: 'bold' },
+      subtitleFontWeight: { type: String, enum: ['normal', 'medium', 'semibold', 'bold'], default: 'normal' },
+      fontFamily: { type: String, default: 'Inter' },
+      textAlign: { type: String, enum: ['left', 'center', 'right'], default: 'center' },
+      qrPosition: { type: String, enum: ['bottom', 'center', 'top'], default: 'bottom' },
+      borderRadius: { type: Number, default: 16 },
+      showGradient: { type: Boolean, default: false },
+      gradientColor: { type: String, default: null },
+      gradientDirection: { type: String, enum: ['to-bottom', 'to-right', 'to-bottom-right', 'to-top-right'], default: 'to-bottom' },
+      padding: { type: Number, default: 24 },
+      titleLetterSpacing: { type: Number, default: 0 },
+      subtitleLetterSpacing: { type: Number, default: 0 },
+      showBorder: { type: Boolean, default: false },
+      borderColor: { type: String, default: null },
+      borderWidth: { type: Number, default: 1 },
+      shadowIntensity: { type: String, enum: ['none', 'light', 'medium', 'strong'], default: 'medium' },
+      decorativeStyle: { type: String, enum: ['none', 'circles', 'dots', 'lines', 'geometric'], default: 'none' },
+      accentColor: { type: String, default: null },
+    },
+    // QR Code Styling
+    styling: {
+      fgColor: { type: String, default: '#000000' },
       bgColor: { type: String, default: '#ffffff' },
-      bgColorGradient: { type: Object, default: null },
-      bgImage: { type: String, default: null },
-      bgImageOpacity: { type: Number, default: 1 },
-      qrSize: { type: Number, default: 256 },
-      errorLevel: { type: String, enum: ['L', 'M', 'Q', 'H'], default: 'M' },
-      dotStyle: { type: String, default: 'square' },
-      cornerSquareStyle: { type: String, default: 'square' },
-      cornerDotStyle: { type: String, default: 'square' },
-      logo: { type: String, default: null },
-      logoSize: { type: Number, default: 50 },
-      logoPadding: { type: Number, default: 5 },
-      removeBackground: { type: Boolean, default: true },
-      margin: { type: Number, default: 10 },
-      frameOptions: { type: Object, default: null },
-      shadow: { type: Boolean, default: false },
-      shadowColor: { type: String, default: '#000000' },
-      shadowBlur: { type: Number, default: 0 },
-      borderRadius: { type: Number, default: 0 },
+      size: { type: Number, default: 200 },
+      level: { type: String, enum: ['L', 'M', 'Q', 'H'], default: 'M' },
+      includeMargin: { type: Boolean, default: true },
     },
   },
   {
