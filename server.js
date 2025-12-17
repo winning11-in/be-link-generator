@@ -19,8 +19,32 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
+// Configure CORS origins via env var for flexibility (comma-separated list)
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:8080,https://fe-link-generator.vercel.app,https://qr-craft-studio.vercel.app,https://lovable.dev')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''));
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'https://fe-link-generator.vercel.app','http://localhost:8080','https://qr-craft-studio.vercel.app',"https://lovable.dev"],
+  origin: function (origin, callback) {
+    // If no origin (e.g., same-origin or non-browser request), allow
+    if (!origin) return callback(null, true);
+
+    const originClean = origin.replace(/\/$/, '');
+
+    // Allow if origin matches configured list
+    if (allowedOrigins.includes(originClean)) {
+      return callback(null, true);
+    }
+
+    // Allow Lovable preview subdomains like <project>.lovable.dev
+    if (/\.lovable\.dev$/i.test(originClean) || /^https:\/\/lovable\.dev$/i.test(originClean)) {
+      return callback(null, true);
+    }
+
+    // Not allowed
+    console.warn(`Blocked CORS request from origin: ${originClean}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
