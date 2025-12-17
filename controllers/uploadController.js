@@ -3,7 +3,8 @@ import path from 'path';
 
 // Helper to extract base64 data and mime type
 const parseDataUrl = (dataUrl) => {
-  const matches = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+  // Accept complex mime types like image/svg+xml as well as png/jpg
+  const matches = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
   if (!matches) return null;
   return { mime: matches[1], data: matches[2] };
 };
@@ -38,7 +39,8 @@ export const uploadLogo = async (req, res) => {
     return res.json({ success: true, url });
   } catch (error) {
     console.error('uploadLogo error:', error);
-    return res.status(500).json({ success: false, message: 'Upload failed' });
+    // Return specific error message when possible to help diagnose uploads (non-sensitive)
+    return res.status(500).json({ success: false, message: (error && error.message) ? error.message : 'Upload failed' });
   }
 };
 
