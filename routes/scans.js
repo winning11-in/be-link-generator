@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUserScans } from '../controllers/scanController.js';
+import { getUserScans, getUserAnalytics } from '../controllers/scanController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
