@@ -20,7 +20,7 @@ connectDB();
 
 // Middleware
 // Configure CORS origins via env var for flexibility (comma-separated list)
-const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:5173,http://localhost:8080,https://fe-link-generator.vercel.app,https://qr-craft-studio.vercel.app,https://lovable.dev')
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:3000/,http://localhost:5173,http://localhost:8080,https://fe-link-generator.vercel.app,https://qr-craft-studio.vercel.app,https://lovable.dev')
   .split(',')
   .map((o) => o.trim().replace(/\/$/, ''));
 
