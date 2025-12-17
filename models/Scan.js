@@ -4,8 +4,13 @@ const scanSchema = new mongoose.Schema(
   {
     qrCode: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
+      required: false,
       ref: 'QRCode',
+    },
+    // Optional target for preview redirects (full URL)
+    target: {
+      type: String,
+      default: null,
     },
     // Device & Browser Info
     browser: {
