@@ -88,6 +88,52 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, mobile, country, city } = req.body;
+
+    // Validate required fields
+    if (!name || name.trim().length === 0) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { 
+        name: name.trim(),
+        mobile: mobile ? mobile.trim() : undefined,
+        country: country ? country.trim() : undefined,
+        city: city ? city.trim() : undefined,
+      },
+      { new: true }
+    ).select('-password');
+
+    if (user) {
+      res.json({
+        success: true,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          isAdmin: user.isAdmin,
+          theme: user.theme,
+          mobile: user.mobile,
+          country: user.country,
+          city: user.city,
+          createdAt: user.createdAt,
+        },
+      });
+    } else {
+      res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Update user theme
 // @route   PUT /api/auth/theme
 // @access  Private
