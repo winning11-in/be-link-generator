@@ -28,6 +28,7 @@ export const signup = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        theme: user.theme,
         token: generateToken(user._id),
       });
     } else {
@@ -54,6 +55,7 @@ export const signin = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        theme: user.theme,
         token: generateToken(user._id),
       });
     } else {
@@ -86,12 +88,24 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// @desc    Get current user (me)
-// @route   GET /api/auth/me
+// @desc    Update user theme
+// @route   PUT /api/auth/theme
 // @access  Private
-export const getCurrentUser = async (req, res) => {
+export const updateTheme = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    const { theme } = req.body;
+
+    // Validate theme
+    const validThemes = ['purple', 'blue', 'green', 'orange', 'rose', 'slate', 'teal', 'indigo', 'emerald', 'cyan', 'violet', 'fuchsia', 'gradient_sunset', 'gradient_ocean', 'gradient_forest', 'gradient_royal'];
+    if (!validThemes.includes(theme)) {
+      return res.status(400).json({ message: 'Invalid theme' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { theme },
+      { new: true }
+    ).select('-password');
 
     if (user) {
       res.json({
@@ -101,6 +115,7 @@ export const getCurrentUser = async (req, res) => {
           name: user.name,
           email: user.email,
           isAdmin: user.isAdmin,
+          theme: user.theme,
           createdAt: user.createdAt,
         },
       });
