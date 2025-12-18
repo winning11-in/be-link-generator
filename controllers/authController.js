@@ -29,6 +29,9 @@ export const signup = async (req, res) => {
         email: user.email,
         isAdmin: user.isAdmin,
         theme: user.theme,
+        mobile: user.mobile,
+        country: user.country,
+        city: user.city,
         token: generateToken(user._id),
       });
     } else {
@@ -56,6 +59,9 @@ export const signin = async (req, res) => {
         email: user.email,
         isAdmin: user.isAdmin,
         theme: user.theme,
+        mobile: user.mobile,
+        country: user.country,
+        city: user.city,
         token: generateToken(user._id),
       });
     } else {
@@ -79,6 +85,11 @@ export const getProfile = async (req, res) => {
         name: user.name,
         email: user.email,
         isAdmin: user.isAdmin,
+        theme: user.theme,
+        mobile: user.mobile,
+        country: user.country,
+        city: user.city,
+        createdAt: user.createdAt,
       });
     } else {
       res.status(404).json({ message: 'User not found' });
