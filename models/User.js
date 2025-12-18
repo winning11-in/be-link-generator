@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    theme: {
+      type: String,
+      default: 'purple',
+      enum: ['purple', 'blue', 'green', 'orange', 'rose', 'slate', 'teal', 'indigo', 'emerald', 'cyan', 'violet', 'fuchsia', 'gradient_sunset', 'gradient_ocean', 'gradient_forest', 'gradient_royal'],
+    },
   },
   {
     timestamps: true,
