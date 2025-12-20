@@ -20,7 +20,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000','http://localhost:3000/', 'http://localhost:5173', 'https://fe-link-generator.vercel.app','http://localhost:8080','https://qr-craft-studio.vercel.app',"https://lovable.dev"],
+  origin: ['http://localhost:3000','http://localhost:3000/', 'http://localhost:5173', 'https://fe-link-generator.vercel.app','http://localhost:8080','https://qr-craft-studio.vercel.app',"https://lovable.dev","https://lovable.dev/projects/1b715cad-150e-47b1-8b6a-2f9b49abf9a1"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
