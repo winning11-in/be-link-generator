@@ -14,6 +14,15 @@ export const redirectToContent = async (req, res) => {
       return res.status(404).send('QR code not found');
     }
 
+    // If expired or exceeded scan limit, redirect to unavailable page (client will show message)
+    const now = new Date();
+    if (qrCode.expirationDate && now > new Date(qrCode.expirationDate)) {
+      return res.redirect(`/qr/unavailable/${qrCode._id}?reason=expired`);
+    }
+    if (qrCode.scanLimit && qrCode.scanCount >= qrCode.scanLimit) {
+      return res.redirect(`/qr/unavailable/${qrCode._id}?reason=limit`);
+    }
+
     // Parse user agent
     const userAgent = req.headers['user-agent'] || '';
     const parser = new UAParser(userAgent);

@@ -8,7 +8,7 @@ import geoip from 'geoip-lite';
 // @access  Private
 export const createQRCode = async (req, res) => {
   try {
-    const { type, content, name, template, styling, previewImage } = req.body;
+    const { type, content, name, template, styling, previewImage, password, expirationDate, scanLimit } = req.body;
 
     const qrCode = await QRCode.create({
       user: req.user._id,
@@ -18,6 +18,9 @@ export const createQRCode = async (req, res) => {
       template,
       styling,
       previewImage,
+      password: password || null,
+      expirationDate: expirationDate ? new Date(expirationDate) : null,
+      scanLimit: scanLimit || null,
     });
 
     res.status(201).json({
@@ -132,6 +135,15 @@ export const incrementScan = async (req, res) => {
 
     if (!qrCode) {
       return res.status(404).json({ success: false, message: 'QR code not found' });
+    }
+
+    // Check expiration and scan limit before creating a scan
+    const now = new Date();
+    if (qrCode.expirationDate && now > new Date(qrCode.expirationDate)) {
+      return res.status(403).json({ success: false, message: 'QR code expired' });
+    }
+    if (qrCode.scanLimit && qrCode.scanCount >= qrCode.scanLimit) {
+      return res.status(403).json({ success: false, message: 'Scan limit reached' });
     }
 
     // Parse user agent

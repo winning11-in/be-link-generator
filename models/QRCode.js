@@ -35,6 +35,20 @@ const qrCodeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Optional access control
+    password: {
+      type: String,
+      default: null,
+    },
+    // Expiration and limits
+    expirationDate: {
+      type: Date,
+      default: null,
+    },
+    scanLimit: {
+      type: Number,
+      default: null,
+    },
     // Card Template Configuration - make flexible so frontend can add fields without backend schema changes
     template: {
       type: Object,
