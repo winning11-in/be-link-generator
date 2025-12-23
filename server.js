@@ -8,6 +8,7 @@ import scanRoutes from './routes/scans.js';
 import contactRoutes from './routes/contacts.js';
 import uploadsRoutes from './routes/uploads.js';
 import redirectRoutes from './routes/redirects.js';
+import adminRoutes from './routes/admin.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -35,6 +36,9 @@ app.use('/api/qrcodes', qrCodeRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/uploads', uploadsRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
 
 // Redirect route for scanned QR codes (public)
 app.use('/r', redirectRoutes);
