@@ -32,16 +32,38 @@ export const createQRCode = async (req, res) => {
   }
 };
 
-// @desc    Get all QR codes for current user
+// @desc    Get all QR codes for current user (with pagination and search)
 // @route   GET /api/qrcodes
 // @access  Private
 export const getUserQRCodes = async (req, res) => {
   try {
-    const qrCodes = await QRCode.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 100); // cap limit to 100
+    const search = (req.query.search || '').toString().trim();
+
+    // Build query: user + optional search on name or content
+    const query = { user: req.user._id };
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const total = await QRCode.countDocuments(query);
+    const totalPages = Math.ceil(total / limit) || 1;
+
+    const qrCodes = await QRCode.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.json({
       success: true,
-      count: qrCodes.length,
+      total,
+      totalPages,
+      page,
+      limit,
       qrCodes,
     });
   } catch (error) {
