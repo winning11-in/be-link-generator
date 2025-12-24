@@ -1,5 +1,5 @@
 import express from 'express';
-import { signup, signin, getProfile, updateTheme, updateProfile, changePassword, setupTwoFactor, verifyTwoFactor, disableTwoFactor } from '../controllers/authController.js';
+import { signup, signin, getProfile, updateTheme, updateProfile, changePassword } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,10 +14,7 @@ router.get('/me', protect, getProfile);
 router.put('/theme', protect, updateTheme);
 router.put('/profile', protect, updateProfile);
 
-// Password and 2FA
+// Password
 router.put('/password', protect, asyncHandler(changePassword));
-router.post('/2fa/setup', protect, asyncHandler(setupTwoFactor));
-router.post('/2fa/verify', protect, asyncHandler(verifyTwoFactor));
-router.post('/2fa/disable', protect, asyncHandler(disableTwoFactor));
 
 export default router;
