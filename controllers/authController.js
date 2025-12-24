@@ -189,7 +189,7 @@ export const updateTheme = async (req, res) => {
 // @desc    Change password
 // @route   PUT /api/auth/password
 // @access  Private
-export const changePassword = async (req, res) => {
+export const changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -201,7 +201,7 @@ export const changePassword = async (req, res) => {
       return res.status(400).json({ message: 'New password must be at least 8 characters' });
     }
 
-    const user = await User.findById(req.user._id).select('+password');
+    const user = await User.findById(req.user._1d || req.user._id).select('+password');
     if (!user || !(await user.matchPassword(currentPassword))) {
       return res.status(401).json({ message: 'Current password is incorrect' });
     }
@@ -211,14 +211,14 @@ export const changePassword = async (req, res) => {
 
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Setup Two-Factor (generate QR and temp secret)
 // @route   POST /api/auth/2fa/setup
 // @access  Private
-export const setupTwoFactor = async (req, res) => {
+export const setupTwoFactor = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -231,14 +231,14 @@ export const setupTwoFactor = async (req, res) => {
 
     res.json({ qrCodeDataUrl: qrDataUrl, base32: secret.base32 });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Verify Two-Factor token and enable 2FA
 // @route   POST /api/auth/2fa/verify
 // @access  Private
-export const verifyTwoFactor = async (req, res) => {
+export const verifyTwoFactor = async (req, res, next) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'Token is required' });
@@ -258,14 +258,14 @@ export const verifyTwoFactor = async (req, res) => {
 
     res.json({ success: true, message: 'Two-Factor Authentication enabled' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Disable Two-Factor
 // @route   POST /api/auth/2fa/disable
 // @access  Private
-export const disableTwoFactor = async (req, res) => {
+export const disableTwoFactor = async (req, res, next) => {
   try {
     const { token, currentPassword } = req.body;
     const user = await User.findById(req.user._id).select('+twoFactorSecret +password');
@@ -290,6 +290,6 @@ export const disableTwoFactor = async (req, res) => {
 
     res.json({ success: true, message: 'Two-Factor Authentication disabled' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
