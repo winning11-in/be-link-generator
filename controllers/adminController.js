@@ -56,4 +56,48 @@ export const getAllUsersData = async (req, res) => {
   }
 };
 
-export default { getAllUsersData };
+
+export const blockUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { blocked } = req.body;
+
+    if (typeof blocked === 'undefined') {
+      return res.status(400).json({ success: false, message: 'Provide blocked boolean in body' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { blocked: !!blocked },
+      { new: true }
+    ).select('-password');
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    return res.json({ success: true, user });
+  } catch (error) {
+    console.error('Admin blockUser error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Delete user's QR codes
+    await QRCode.deleteMany({ user: userId });
+
+    await User.findByIdAndDelete(userId);
+
+    return res.json({ success: true, message: 'User deleted' });
+  } catch (error) {
+    console.error('Admin deleteUser error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser };

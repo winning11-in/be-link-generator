@@ -53,21 +53,25 @@ export const signin = async (req, res) => {
     // Check for user email
     const user = await User.findOne({ email }).select('+password');
 
-    if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        theme: user.theme,
-        mobile: user.mobile,
-        country: user.country,
-        city: user.city,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    if (user.blocked) {
+      return res.status(403).json({ message: 'Account is blocked, contact support' });
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      theme: user.theme,
+      mobile: user.mobile,
+      country: user.country,
+      city: user.city,
+      token: generateToken(user._id),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
