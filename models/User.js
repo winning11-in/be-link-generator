@@ -46,6 +46,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    profilePicture: {
+      type: String, // URL or path to the uploaded image
+    },
+    language: {
+      type: String,
+      default: 'en',
+      enum: ['en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'zh', 'ja', 'ko'], // Add more as needed
+    },
+    timezone: {
+      type: String,
+      default: 'UTC',
+    },
     blocked: {
       type: Boolean,
       default: false,

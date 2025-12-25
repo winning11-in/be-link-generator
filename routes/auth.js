@@ -1,5 +1,5 @@
 import express from 'express';
-import { signup, signin, getProfile, updateTheme, updateProfile, changePassword } from '../controllers/authController.js';
+import { signup, signin, getProfile, updateTheme, updateProfile, changePassword, uploadProfilePicture } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.post('/signin', signin);
 router.get('/profile', protect, getProfile);
 router.get('/me', protect, getProfile);
 router.put('/theme', protect, updateTheme);
-router.put('/profile', protect, updateProfile);
+router.put('/profile', protect, uploadProfilePicture, updateProfile);
 
 // Password
 router.put('/password', protect, asyncHandler(changePassword));
