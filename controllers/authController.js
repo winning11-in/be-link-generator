@@ -7,11 +7,19 @@ import fs from 'fs';
 // Configure multer for profile picture upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = 'uploads/profiles';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const profilesDir = path.join(uploadsDir, 'profiles');
+    try {
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      if (!fs.existsSync(profilesDir)) {
+        fs.mkdirSync(profilesDir, { recursive: true });
+      }
+      cb(null, profilesDir);
+    } catch (error) {
+      cb(error, profilesDir);
     }
-    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
