@@ -3,29 +3,17 @@ import { generateToken } from '../utils/jwt.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import cloudinary from 'cloudinary';
 
-// Configure multer for profile picture upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadsDir = path.join(process.cwd(), 'uploads');
-    const profilesDir = path.join(uploadsDir, 'profiles');
-    try {
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      if (!fs.existsSync(profilesDir)) {
-        fs.mkdirSync(profilesDir, { recursive: true });
-      }
-      cb(null, profilesDir);
-    } catch (error) {
-      cb(error, profilesDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
-  }
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: "dj3xx136b",
+  api_key: "526198336185966",
+  api_secret: "zIbgT48P52UwvQy-dgc_u8pmrMo",
 });
+
+// Configure multer for profile picture upload (memory storage for Cloudinary)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
@@ -178,9 +166,33 @@ export const updateProfile = async (req, res) => {
       timezone: timezone || 'UTC',
     };
 
-    // Handle profile picture upload
+    // Handle profile picture upload to Cloudinary
     if (req.file) {
-      updateData.profilePicture = `/uploads/profiles/${req.file.filename}`;
+      try {
+        // Upload to Cloudinary
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.v2.uploader.upload_stream(
+            {
+              folder: 'qr-craft-profiles',
+              public_id: `profile-${req.user._id}-${Date.now()}`,
+              transformation: [
+                { width: 200, height: 200, crop: 'fill' },
+                { quality: 'auto' }
+              ]
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+
+        updateData.profilePicture = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile picture' });
+      }
     }
 
     const user = await User.findByIdAndUpdate(
