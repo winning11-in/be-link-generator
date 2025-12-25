@@ -1,5 +1,41 @@
 import User from '../models/User.js';
 import { generateToken } from '../utils/jwt.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// Configure multer for profile picture upload
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/profiles';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed'), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 200 * 1024 // 200KB limit
+  }
+});
+
+export const uploadProfilePicture = upload.single('profilePicture');
 
 
 // @desc    Register new user
@@ -33,6 +69,9 @@ export const signup = async (req, res) => {
         mobile: user.mobile,
         country: user.country,
         city: user.city,
+        profilePicture: user.profilePicture,
+        language: user.language,
+        timezone: user.timezone,
         token: generateToken(user._id),
       });
     } else {
@@ -70,6 +109,9 @@ export const signin = async (req, res) => {
       mobile: user.mobile,
       country: user.country,
       city: user.city,
+      profilePicture: user.profilePicture,
+      language: user.language,
+      timezone: user.timezone,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -94,6 +136,9 @@ export const getProfile = async (req, res) => {
         mobile: user.mobile,
         country: user.country,
         city: user.city,
+        profilePicture: user.profilePicture,
+        language: user.language,
+        timezone: user.timezone,
         createdAt: user.createdAt,
       });
     } else {
@@ -109,21 +154,30 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { name, mobile, country, city } = req.body;
+    const { name, mobile, country, city, language, timezone } = req.body;
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
       return res.status(400).json({ message: 'Name is required' });
     }
 
+    const updateData = {
+      name: name.trim(),
+      mobile: mobile ? mobile.trim() : undefined,
+      country: country ? country.trim() : undefined,
+      city: city ? city.trim() : undefined,
+      language: language || 'en',
+      timezone: timezone || 'UTC',
+    };
+
+    // Handle profile picture upload
+    if (req.file) {
+      updateData.profilePicture = `/uploads/profiles/${req.file.filename}`;
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { 
-        name: name.trim(),
-        mobile: mobile ? mobile.trim() : undefined,
-        country: country ? country.trim() : undefined,
-        city: city ? city.trim() : undefined,
-      },
+      updateData,
       { new: true }
     ).select('-password');
 
@@ -139,6 +193,9 @@ export const updateProfile = async (req, res) => {
           mobile: user.mobile,
           country: user.country,
           city: user.city,
+          profilePicture: user.profilePicture,
+          language: user.language,
+          timezone: user.timezone,
           createdAt: user.createdAt,
         },
       });
