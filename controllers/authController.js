@@ -166,7 +166,7 @@ export const updateProfile = async (req, res) => {
       timezone: timezone || 'UTC',
     };
 
-    // Handle profile picture upload to Cloudinary
+    // Handle profile picture upload/removal
     if (req.file) {
       try {
         // Upload to Cloudinary
@@ -193,6 +193,9 @@ export const updateProfile = async (req, res) => {
         console.error('Cloudinary upload error:', uploadError);
         return res.status(500).json({ message: 'Failed to upload profile picture' });
       }
+    } else if (req.body.profilePicture === '') {
+      // Remove profile picture
+      updateData.profilePicture = null;
     }
 
     const user = await User.findByIdAndUpdate(
