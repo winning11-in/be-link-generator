@@ -92,11 +92,32 @@ export const uploadQRImage = async (req, res) => {
       stream.end(req.file.buffer);
     });
 
-    return res.json({ success: true, url: result.secure_url });
+    // Include public_id in response so the frontend can optionally delete the image later
+    return res.json({ success: true, url: result.secure_url, public_id: result.public_id });
   } catch (error) {
     console.error('uploadQRImage error:', error);
     return res.status(500).json({ success: false, message: (error && error.message) ? error.message : 'Upload failed' });
   }
 };
 
-export default { uploadLogo, uploadQRImage };
+// Delete a previously uploaded QR image (by Cloudinary public_id)
+export const deleteQRImage = async (req, res) => {
+  try {
+    const { publicId } = req.body;
+    if (!publicId) return res.status(400).json({ success: false, message: 'Missing publicId' });
+
+    await new Promise((resolve, reject) => {
+      cloudinary.v2.uploader.destroy(publicId, { resource_type: 'image' }, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      });
+    });
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('deleteQRImage error:', error);
+    return res.status(500).json({ success: false, message: (error && error.message) ? error.message : 'Delete failed' });
+  }
+};
+
+export default { uploadLogo, uploadQRImage, deleteQRImage };
