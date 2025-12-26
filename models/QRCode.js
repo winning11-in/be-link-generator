@@ -10,7 +10,7 @@ const qrCodeSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi', 'vcard', 'instagram', 'facebook', 'youtube', 'whatsapp'],
+      enum: ['url', 'text', 'email', 'phone', 'sms', 'wifi', 'location', 'upi', 'vcard', 'instagram', 'facebook', 'youtube', 'whatsapp', 'image'],
     },
     // The actual QR code content/data
     content: {

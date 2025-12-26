@@ -72,6 +72,37 @@ export const redirectToContent = async (req, res) => {
     qrCode.scanCount += 1;
     await qrCode.save();
 
+    // If this is an image QR, render a simple page that displays the image
+    if (qrCode.type === 'image') {
+      const imageUrl = qrCode.content;
+      const html = `<!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Scanned Image</title>
+            <style>
+              body { margin: 0; background: #f7fafc; display:flex; align-items:center; justify-content:center; height:100vh; font-family: Arial, sans-serif }
+              .card { max-width: 900px; width: 100%; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 20px rgba(16,24,40,0.08); }
+              img { width: 100%; height: auto; display: block; }
+              .actions { padding: 16px; display:flex; gap:8px; }
+              a.button { display:inline-block; padding:10px 14px; background:#2563eb; color:#fff; text-decoration:none; border-radius:8px }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <img src="${imageUrl}" alt="QR Image" />
+              <div class="actions">
+                <a class="button" href="${imageUrl}" target="_blank">Open Full Image</a>
+                <a class="button" href="${imageUrl}" download>Download Image</a>
+              </div>
+            </div>
+          </body>
+        </html>`;
+
+      return res.send(html);
+    }
+
     // Redirect to the actual content
     return res.redirect(qrCode.content);
   } catch (error) {

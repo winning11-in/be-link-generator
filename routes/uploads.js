@@ -1,9 +1,12 @@
 import express from 'express';
-import { uploadLogo } from '../controllers/uploadController.js';
+import { uploadLogo, uploadQRImage, uploadQRImageMiddleware } from '../controllers/uploadController.js';
 
 const router = express.Router();
 
 // Upload a logo (accepts base64 data URL in JSON)
 router.post('/logo', uploadLogo);
+
+// Upload an image for an Image-type QR (multipart/form-data file field 'image')
+router.post('/qr-image', uploadQRImageMiddleware, uploadQRImage);
 
 export default router;
