@@ -21,9 +21,23 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please add a password'],
+      required: function() {
+        return !this.googleId; // Password not required if signing in with Google
+      },
       minlength: 6,
       select: false,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null values while maintaining uniqueness for non-null values
+    },
+    picture: {
+      type: String, // Google profile picture URL
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
     isAdmin: {
       type: Boolean,
@@ -69,9 +83,10 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    next();
+userSchema.pre('save', async function () {
+  // Skip password hashing if password is not modified or if it's a Google user
+  if (!this.isModified('password') || !this.password) {
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
