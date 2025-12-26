@@ -1,5 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
+import cloudinary from 'cloudinary';
+
+// Configure Cloudinary (use env vars when available, otherwise fallback)
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dj3xx136b',
+  api_key: process.env.CLOUDINARY_API_KEY || '526198336185966',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'zIbgT48P52UwvQy-dgc_u8pmrMo',
+});
 
 // Helper to extract base64 data and mime type
 const parseDataUrl = (dataUrl) => {
@@ -44,4 +53,50 @@ export const uploadLogo = async (req, res) => {
   }
 };
 
-export default { uploadLogo };
+// Multer memory storage for cloud uploads
+const memoryStorage = multer.memoryStorage();
+
+const imageFileFilter = (req, file, cb) => {
+  if (file.mimetype && file.mimetype.startsWith('image/')) cb(null, true);
+  else cb(new Error('Only image files are allowed'), false);
+};
+
+const imageUpload = multer({
+  storage: memoryStorage,
+  fileFilter: imageFileFilter,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+});
+
+// Middleware to use on the route
+export const uploadQRImageMiddleware = imageUpload.single('image');
+
+// Handler to upload image to Cloudinary and return URL
+export const uploadQRImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.v2.uploader.upload_stream(
+        {
+          folder: 'qr-images',
+          public_id: `qr-${Date.now()}`,
+          transformation: [{ quality: 'auto' }],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    return res.json({ success: true, url: result.secure_url });
+  } catch (error) {
+    console.error('uploadQRImage error:', error);
+    return res.status(500).json({ success: false, message: (error && error.message) ? error.message : 'Upload failed' });
+  }
+};
+
+export default { uploadLogo, uploadQRImage };
