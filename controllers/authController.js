@@ -80,6 +80,8 @@ export const signup = async (req, res) => {
         profilePicture: user.profilePicture,
         language: user.language,
         timezone: user.timezone,
+        removeWatermark: user.removeWatermark,
+        watermarkText: user.watermarkText,
         token: generateToken(user._id),
       });
     } else {
@@ -120,6 +122,8 @@ export const signin = async (req, res) => {
       profilePicture: user.profilePicture,
       language: user.language,
       timezone: user.timezone,
+      removeWatermark: user.removeWatermark,
+      watermarkText: user.watermarkText,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -147,6 +151,8 @@ export const getProfile = async (req, res) => {
         profilePicture: user.profilePicture,
         language: user.language,
         timezone: user.timezone,
+        removeWatermark: user.removeWatermark,
+        watermarkText: user.watermarkText,
         createdAt: user.createdAt,
       });
     } else {
@@ -162,7 +168,7 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { name, mobile, country, city, language, timezone } = req.body;
+    const { name, mobile, country, city, language, timezone, removeWatermark, watermarkText } = req.body;
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
@@ -176,6 +182,8 @@ export const updateProfile = async (req, res) => {
       city: city ? city.trim() : undefined,
       language: language || 'en',
       timezone: timezone || 'UTC',
+      removeWatermark: removeWatermark !== undefined ? removeWatermark : undefined,
+      watermarkText: watermarkText ? watermarkText.trim() : undefined,
     };
 
     // Handle profile picture upload/removal
@@ -231,6 +239,8 @@ export const updateProfile = async (req, res) => {
           profilePicture: user.profilePicture,
           language: user.language,
           timezone: user.timezone,
+          removeWatermark: user.removeWatermark,
+          watermarkText: user.watermarkText,
           createdAt: user.createdAt,
         },
       });
@@ -374,6 +384,8 @@ export const googleAuth = async (req, res) => {
       picture: user.picture,
       language: user.language,
       timezone: user.timezone,
+      removeWatermark: user.removeWatermark,
+      watermarkText: user.watermarkText,
       isVerified: user.isVerified,
       token: generateToken(user._id),
     });

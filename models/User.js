@@ -76,6 +76,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    removeWatermark: {
+      type: Boolean,
+      default: false,
+    },
+    watermarkText: {
+      type: String,
+      default: 'QR Studio',
+    },
   },
   {
     timestamps: true,
