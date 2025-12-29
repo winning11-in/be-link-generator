@@ -27,11 +27,23 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 1024 * 1024 // 1MB limit
+    fileSize: 3 * 1024 * 1024 // 3MB limit
   }
 });
 
-export const uploadProfilePicture = upload.single('profilePicture');
+// Wrap multer middleware to return friendly error messages for file size / type
+export const uploadProfilePicture = (req, res, next) => {
+  upload.single('profilePicture')(req, res, (err) => {
+    if (err) {
+      // Multer uses 'LIMIT_FILE_SIZE' for file size errors
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, message: 'Profile picture must be 3MB or smaller' });
+      }
+      return res.status(400).json({ success: false, message: err.message || 'Invalid file upload' });
+    }
+    next();
+  });
+};
 
 
 // @desc    Register new user
