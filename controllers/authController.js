@@ -82,6 +82,7 @@ export const signup = async (req, res) => {
         timezone: user.timezone,
         removeWatermark: user.removeWatermark,
         watermarkText: user.watermarkText,
+        whiteLabel: user.whiteLabel,
         token: generateToken(user._id),
       });
     } else {
@@ -124,6 +125,7 @@ export const signin = async (req, res) => {
       timezone: user.timezone,
       removeWatermark: user.removeWatermark,
       watermarkText: user.watermarkText,
+      whiteLabel: user.whiteLabel,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -153,6 +155,7 @@ export const getProfile = async (req, res) => {
         timezone: user.timezone,
         removeWatermark: user.removeWatermark,
         watermarkText: user.watermarkText,
+        whiteLabel: user.whiteLabel,
         createdAt: user.createdAt,
       });
     } else {
@@ -168,7 +171,7 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { name, mobile, country, city, language, timezone, removeWatermark, watermarkText } = req.body;
+    const { name, mobile, country, city, language, timezone, removeWatermark, watermarkText, whiteLabel } = req.body;
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
@@ -185,6 +188,22 @@ export const updateProfile = async (req, res) => {
       removeWatermark: removeWatermark !== undefined ? removeWatermark : undefined,
       watermarkText: watermarkText ? watermarkText.trim() : undefined,
     };
+
+    // Handle whiteLabel if provided
+    if (whiteLabel) {
+      try {
+        const whiteLabelConfig = typeof whiteLabel === 'string' ? JSON.parse(whiteLabel) : whiteLabel;
+        updateData.whiteLabel = {
+          enabled: whiteLabelConfig.enabled || false,
+          brandName: whiteLabelConfig.brandName ? whiteLabelConfig.brandName.trim() : undefined,
+          primaryColor: whiteLabelConfig.primaryColor || '#6366f1',
+          loadingText: whiteLabelConfig.loadingText ? whiteLabelConfig.loadingText.trim() : undefined,
+          showPoweredBy: whiteLabelConfig.showPoweredBy !== undefined ? whiteLabelConfig.showPoweredBy : true,
+        };
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid whiteLabel configuration' });
+      }
+    }
 
     // Handle profile picture upload/removal
     if (req.file) {
@@ -241,6 +260,7 @@ export const updateProfile = async (req, res) => {
           timezone: user.timezone,
           removeWatermark: user.removeWatermark,
           watermarkText: user.watermarkText,
+          whiteLabel: user.whiteLabel,
           createdAt: user.createdAt,
         },
       });
@@ -386,6 +406,7 @@ export const googleAuth = async (req, res) => {
       timezone: user.timezone,
       removeWatermark: user.removeWatermark,
       watermarkText: user.watermarkText,
+      whiteLabel: user.whiteLabel,
       isVerified: user.isVerified,
       token: generateToken(user._id),
     });

@@ -84,6 +84,28 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'QR Studio',
     },
+    whiteLabel: {
+      enabled: {
+        type: Boolean,
+        default: false,
+      },
+      brandName: {
+        type: String,
+        trim: true,
+      },
+      primaryColor: {
+        type: String,
+        default: '#6366f1',
+      },
+      loadingText: {
+        type: String,
+        trim: true,
+      },
+      showPoweredBy: {
+        type: Boolean,
+        default: true,
+      },
+    },
   },
   {
     timestamps: true,
