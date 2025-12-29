@@ -23,6 +23,11 @@ export const redirectToContent = async (req, res) => {
       return res.redirect(`/qr/unavailable/${qrCode._id}?reason=limit`);
     }
 
+    // Check if QR code is active
+    if (qrCode.status !== 'active') {
+      return res.redirect(`/qr/unavailable/${qrCode._id}?reason=inactive`);
+    }
+
     // Parse user agent
     const userAgent = req.headers['user-agent'] || '';
     const parser = new UAParser(userAgent);
