@@ -60,8 +60,8 @@ export const getUserQRCodes = async (req, res) => {
 
     // Calculate total stats for dashboard
     const statsQuery = { user: req.user._id };
-    const allQRCodes = await QRCode.find(statsQuery).select('scans status');
-    const totalScans = allQRCodes.reduce((acc, qr) => acc + qr.scans, 0);
+    const allQRCodes = await QRCode.find(statsQuery).select('scanCount status');
+    const totalScans = allQRCodes.reduce((acc, qr) => acc + qr.scanCount, 0);
     const totalActive = allQRCodes.filter(qr => qr.status === 'active').length;
 
     res.json({
