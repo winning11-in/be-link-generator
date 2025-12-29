@@ -173,6 +173,11 @@ export const incrementScan = async (req, res) => {
       return res.status(404).json({ success: false, message: 'QR code not found' });
     }
 
+    // Check if QR code is active
+    if (qrCode.status !== 'active') {
+      return res.status(403).json({ success: false, message: 'QR code is inactive' });
+    }
+
     // Check expiration and scan limit before creating a scan
     const now = new Date();
     if (qrCode.expirationDate && now > new Date(qrCode.expirationDate)) {
