@@ -86,15 +86,19 @@ export const getUserQRCodes = async (req, res) => {
 // @access  Private
 export const getQRCode = async (req, res) => {
   try {
-    const qrCode = await QRCode.findById(req.params.id);
+    const qrCode = await QRCode.findById(req.params.id).populate('user', 'whiteLabel');
 
     if (!qrCode) {
       return res.status(404).json({ success: false, message: 'QR code not found' });
     }
 
+    // Add whiteLabel from user to the response
+    const qrCodeResponse = qrCode.toObject();
+    qrCodeResponse.whiteLabel = qrCode.user?.whiteLabel || null;
+
     res.json({
       success: true,
-      qrCode,
+      qrCode: qrCodeResponse,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
