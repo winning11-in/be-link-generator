@@ -171,7 +171,7 @@ export const getProfile = async (req, res) => {
 // @access  Private
 export const updateProfile = async (req, res) => {
   try {
-    const { name, mobile, country, city, language, timezone, removeWatermark, watermarkText, whiteLabel } = req.body;
+    const { name, mobile, country, city, language, timezone, timeFormat, removeWatermark, watermarkText, whiteLabel } = req.body;
 
     // Validate required fields
     if (!name || name.trim().length === 0) {
@@ -185,6 +185,7 @@ export const updateProfile = async (req, res) => {
       city: city ? city.trim() : undefined,
       language: language || 'en',
       timezone: timezone || 'UTC',
+      timeFormat: timeFormat || '12',
       removeWatermark: removeWatermark !== undefined ? removeWatermark : undefined,
       watermarkText: watermarkText ? watermarkText.trim() : undefined,
     };
