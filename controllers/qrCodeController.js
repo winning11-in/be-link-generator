@@ -126,6 +126,8 @@ export const updateQRCode = async (req, res) => {
       runValidators: true,
     });
 
+    console.log(`[Update QR] ID: ${req.params.id}, Status: ${qrCode.status}, Updated fields:`, Object.keys(req.body));
+
     res.json({
       success: true,
       qrCode,
