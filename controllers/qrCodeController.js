@@ -58,12 +58,6 @@ export const getUserQRCodes = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-    // Calculate total stats for dashboard
-    const statsQuery = { user: req.user._id };
-    const allQRCodes = await QRCode.find(statsQuery).select('scanCount status');
-    const totalScans = allQRCodes.reduce((acc, qr) => acc + qr.scanCount, 0);
-    const totalActive = allQRCodes.filter(qr => qr.status === 'active').length;
-
     res.json({
       success: true,
       total,
@@ -71,10 +65,6 @@ export const getUserQRCodes = async (req, res) => {
       page,
       limit,
       qrCodes,
-      stats: {
-        totalScans,
-        totalActive,
-      },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -243,6 +233,32 @@ export const incrementScan = async (req, res) => {
       success: true,
       scanCount: qrCode.scanCount,
       scanId: scan._id,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get stats only (total counts, not affected by search)
+// @route   GET /api/qrcodes/stats
+// @access  Private
+export const getStats = async (req, res) => {
+  try {
+    const statsQuery = { user: req.user._id };
+    
+    // Get total count
+    const total = await QRCode.countDocuments(statsQuery);
+    
+    // Get all QR codes to calculate stats
+    const allQRCodes = await QRCode.find(statsQuery).select('scanCount status');
+    const totalScans = allQRCodes.reduce((acc, qr) => acc + qr.scanCount, 0);
+    const totalActive = allQRCodes.filter(qr => qr.status === 'active').length;
+
+    res.json({
+      success: true,
+      total,
+      totalScans,
+      totalActive,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
