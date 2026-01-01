@@ -14,6 +14,8 @@ export const redirectToContent = async (req, res) => {
       return res.status(404).send('QR code not found');
     }
 
+    console.log(`[Redirect] QR ${req.params.id} - Status: ${qrCode.status}, Scans: ${qrCode.scanCount}`);
+
     // If expired or exceeded scan limit, redirect to unavailable page (client will show message)
     const now = new Date();
     if (qrCode.expirationDate && now > new Date(qrCode.expirationDate)) {
@@ -23,8 +25,8 @@ export const redirectToContent = async (req, res) => {
       return res.redirect(`/qr/unavailable/${qrCode._id}?reason=limit`);
     }
 
-    // Check if QR code is active
-    if (qrCode.status !== 'active') {
+    // Check if QR code is active (explicitly check for inactive status)
+    if (qrCode.status === 'inactive') {
       return res.redirect(`/qr/unavailable/${qrCode._id}?reason=inactive`);
     }
 
