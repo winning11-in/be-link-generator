@@ -6,6 +6,7 @@ import {
   updateQRCode,
   deleteQRCode,
   incrementScan,
+  getStats,
 } from '../controllers/qrCodeController.js';
 import {
   getQRCodeScans,
@@ -14,6 +15,9 @@ import {
 import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Stats endpoint (must be before /:id routes)
+router.get('/stats', protect, getStats);
 
 router.route('/')
   .get(protect, getUserQRCodes)
