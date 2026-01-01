@@ -72,6 +72,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: 'UTC',
     },
+    timeFormat: {
+      type: String,
+      default: '12',
+      enum: ['12', '24'],
+    },
     blocked: {
       type: Boolean,
       default: false,
