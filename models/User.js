@@ -81,6 +81,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpire: {
+      type: Date,
+      select: false,
+    },
     removeWatermark: {
       type: Boolean,
       default: false,
@@ -134,6 +142,15 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
     return false;
   }
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Method to set password (for Google users or password updates)
+userSchema.methods.setPassword = async function (newPassword) {
+  if (!newPassword || newPassword.length < 6) {
+    throw new Error('Password must be at least 6 characters');
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(newPassword, salt);
 };
 
 const User = mongoose.model('User', userSchema);

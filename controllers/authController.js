@@ -4,6 +4,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import cloudinary from 'cloudinary';
+import crypto from 'crypto';
 
 // Configure Cloudinary
 cloudinary.v2.config({
@@ -115,7 +116,10 @@ export const signin = async (req, res) => {
 
     // Check if user has a password (not a Google user)
     if (!user.password) {
-      return res.status(401).json({ message: 'This account uses Google sign-in. Please sign in with Google.' });
+      return res.status(401).json({ 
+        message: 'This account uses Google sign-in. Please sign in with Google, or use "Forgot Password" to set a backup password.',
+        isGoogleUser: true
+      });
     }
 
     // Verify password
@@ -435,6 +439,135 @@ export const googleAuth = async (req, res) => {
   } catch (error) {
     console.error('Google auth error:', error);
     res.status(500).json({ message: 'Google authentication failed', error: error.message });
+  }
+};
+
+// @desc    Set password for Google users or initiate password reset
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide your email' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      // Don't reveal if email exists or not for security
+      return res.json({ 
+        success: true, 
+        message: 'If an account exists with this email, a password reset link will be sent.' 
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    user.resetPasswordExpire = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+    await user.save();
+
+    // In production, send email with reset link
+    // For now, return the token (remove this in production)
+    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${resetToken}`;
+    
+    // TODO: Send email with resetUrl
+    console.log('Password reset URL:', resetUrl);
+    
+    res.json({ 
+      success: true, 
+      message: 'Password reset instructions sent to your email',
+      // Remove in production - only for development
+      resetToken: process.env.NODE_ENV === 'development' ? resetToken : undefined
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Error processing password reset request' });
+  }
+};
+
+// @desc    Reset password with token
+// @route   POST /api/auth/reset-password/:token
+// @access  Public
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Please provide a new password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    // Hash the token to compare with stored hash
+    const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    }).select('+resetPasswordToken +resetPasswordExpire');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+
+    // Set new password using the setPassword method
+    await user.setPassword(password);
+    
+    // Clear reset token fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Password has been reset successfully. You can now sign in with your new password.' 
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: error.message || 'Error resetting password' });
+  }
+};
+
+// @desc    Set password for logged-in Google users
+// @route   POST /api/auth/set-password
+// @access  Private
+export const setPasswordForGoogleUser = async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: 'Please provide a password' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Set the password
+    await user.setPassword(password);
+    await user.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Password set successfully. You can now use email/password to sign in.' 
+    });
+  } catch (error) {
+    console.error('Set password error:', error);
+    res.status(500).json({ message: error.message || 'Error setting password' });
   }
 };
 
