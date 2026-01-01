@@ -101,10 +101,26 @@ export const signin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
+    }
+
     // Check for user email
     const user = await User.findOne({ email }).select('+password');
 
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Check if user has a password (not a Google user)
+    if (!user.password) {
+      return res.status(401).json({ message: 'This account uses Google sign-in. Please sign in with Google.' });
+    }
+
+    // Verify password
+    const isPasswordMatch = await user.matchPassword(password);
+    if (!isPasswordMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
