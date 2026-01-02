@@ -10,7 +10,6 @@ import uploadsRoutes from './routes/uploads.js';
 import redirectRoutes from './routes/redirects.js';
 import adminRoutes from './routes/admin.js';
 import { connectDB } from './config/db.js';
-import requestLogger from './middleware/logger.js';
 
 dotenv.config();
 
@@ -30,9 +29,6 @@ app.use(cors({
 // Increase payload size limit to handle base64 encoded images (20MB limit)
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
-
-// Request logging middleware
-app.use(requestLogger);
 
 // Routes
 app.use('/api/auth', authRoutes);
