@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import QRCode from '../models/QRCode.js';
 import Subscription from '../models/Subscription.js';
+import Payment from '../models/Payment.js';
 
 // @desc    Get all users with their full details and created QR codes (admin only)
 // @route   GET /api/admin/users
@@ -295,4 +296,102 @@ export const getSystemStats = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser };
+// @desc    Get all subscriptions and payments data (admin only)
+// @route   GET /api/admin/subscriptions
+// @access  Admin
+export const getSubscriptionsData = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const search = (req.query.search || '').trim();
+    const filter = {};
+    
+    // Get subscription stats
+    const totalSubscriptions = await Subscription.countDocuments();
+    const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+    const totalPayments = await Payment.countDocuments();
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    const conversionRate = totalSubscriptions > 0 
+      ? ((await Subscription.countDocuments({ planType: { $ne: 'free' } })) / totalSubscriptions * 100).toFixed(2)
+      : 0;
+      
+    // Get subscriptions with user details
+    let subscriptionFilter = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+      subscriptionFilter.userId = { $in: users.map(u => u._id) };
+    }
+    
+    const totalSubs = await Subscription.countDocuments(subscriptionFilter);
+    const subscriptions = await Subscription.find(subscriptionFilter)
+      .populate('userId', 'name email profilePicture createdAt')
+      .populate('paymentId')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+      
+    // Get payments with user details
+    let paymentFilter = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+      paymentFilter.userId = { $in: users.map(u => u._id) };
+    }
+    
+    const totalPaymentsCount = await Payment.countDocuments(paymentFilter);
+    const payments = await Payment.find(paymentFilter)
+      .populate('userId', 'name email profilePicture createdAt')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalRevenue: totalRevenue[0]?.total || 0,
+          activeSubscriptions,
+          totalPayments,
+          conversionRate: parseFloat(conversionRate)
+        },
+        subscriptions: {
+          data: subscriptions,
+          total: totalSubs,
+          page,
+          limit
+        },
+        payments: {
+          data: payments,
+          total: totalPaymentsCount,
+          page,
+          limit
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Subscriptions data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching subscriptions data',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData };
