@@ -1,5 +1,5 @@
 import express from 'express';
-import { auth } from '../middleware/auth.js';
+import { protect } from '../middleware/auth.js';
 import {
   getPlans,
   createOrder,
@@ -15,10 +15,10 @@ const router = express.Router();
 router.get('/plans', getPlans);
 
 // Protected routes
-router.post('/create-order', auth, createOrder);
-router.post('/verify', auth, verifyPayment);
-router.get('/subscription', auth, getSubscription);
-router.get('/history', auth, getPaymentHistory);
-router.post('/cancel', auth, cancelSubscription);
+router.post('/create-order', protect, createOrder);
+router.post('/verify', protect, verifyPayment);
+router.get('/subscription', protect, getSubscription);
+router.get('/history', protect, getPaymentHistory);
+router.post('/cancel', protect, cancelSubscription);
 
 export default router;

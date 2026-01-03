@@ -4,11 +4,20 @@ import Payment from '../models/Payment.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
 
-// Initialize Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+// Initialize Razorpay instance only when needed
+const getRazorpayInstance = () => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  
+  if (!keyId || !keySecret) {
+    throw new Error('Razorpay credentials not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.');
+  }
+  
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret
+  });
+};
 
 // Pricing plans
 const PLANS = {
@@ -95,6 +104,8 @@ export const createOrder = async (req, res) => {
       }
     };
 
+    // Get Razorpay instance
+    const razorpay = getRazorpayInstance();
     const order = await razorpay.orders.create(options);
 
     // Save payment record
