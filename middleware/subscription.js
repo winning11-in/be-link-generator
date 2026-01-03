@@ -1,65 +1,124 @@
 import Subscription from '../models/Subscription.js';
 import QRCode from '../models/QRCode.js';
+import User from '../models/User.js';
+
+// Default plan features
+const DEFAULT_PLAN_FEATURES = {
+  free: {
+    maxQRCodes: 5,
+    maxScansPerQR: 100,
+    customDomains: false,
+    analytics: false,
+    apiAccess: false,
+    prioritySupport: false
+  },
+  basic: {
+    maxQRCodes: 50,
+    maxScansPerQR: 1000,
+    customDomains: false,
+    analytics: true,
+    apiAccess: false,
+    prioritySupport: false
+  },
+  pro: {
+    maxQRCodes: 200,
+    maxScansPerQR: 10000,
+    customDomains: true,
+    analytics: true,
+    apiAccess: true,
+    prioritySupport: false
+  },
+  enterprise: {
+    maxQRCodes: -1, // Unlimited
+    maxScansPerQR: -1, // Unlimited
+    customDomains: true,
+    analytics: true,
+    apiAccess: true,
+    prioritySupport: true
+  }
+};
 
 // Middleware to check subscription limits
 export const checkSubscriptionLimits = async (req, res, next) => {
   try {
     const userId = req.user.id;
+    console.log('Checking subscription limits for user:', userId);
     
-    // Get user's subscription
-    let subscription = await Subscription.findOne({ userId });
+    // Get user's subscription and user data
+    const [subscription, user] = await Promise.all([
+      Subscription.findOne({ userId }),
+      User.findById(userId)
+    ]);
     
-    if (!subscription) {
-      // User has free plan
-      subscription = {
-        planType: 'free',
-        features: {
-          maxQRCodes: 5,
-          maxScansPerQR: 100,
-          customDomains: false,
-          analytics: false,
-          apiAccess: false,
-          prioritySupport: false
-        }
-      };
-    }
-
-    // Check if subscription is expired
-    if (subscription.endDate && subscription.endDate < new Date() && subscription.planType !== 'free') {
-      subscription.planType = 'free';
-      subscription.features = {
-        maxQRCodes: 5,
-        maxScansPerQR: 100,
-        customDomains: false,
-        analytics: false,
-        apiAccess: false,
-        prioritySupport: false
-      };
-    }
-
-    // Attach subscription to request
-    req.subscription = subscription;
+    let currentPlan = 'free';
+    let planFeatures = DEFAULT_PLAN_FEATURES.free;
     
-    // Check QR code creation limit for POST requests to create QR
-    if (req.method === 'POST' && req.route?.path === '/') {
-      const qrCodeCount = await QRCode.countDocuments({ userId });
+    if (subscription) {
+      // Check if subscription is expired
+      const now = new Date();
+      const isExpired = subscription.endDate && subscription.endDate < now;
       
-      if (subscription.features.maxQRCodes !== -1 && qrCodeCount >= subscription.features.maxQRCodes) {
+      if (isExpired && subscription.planType !== 'free') {
+        console.log('Subscription expired, reverting to free plan');
+        // Update subscription to expired status
+        subscription.status = 'expired';
+        subscription.planType = 'free';
+        subscription.features = DEFAULT_PLAN_FEATURES.free;
+        await subscription.save();
+        
+        // Update user record
+        if (user) {
+          user.subscriptionPlan = 'free';
+          user.subscriptionStatus = 'expired';
+          await user.save();
+        }
+        
+        currentPlan = 'free';
+        planFeatures = DEFAULT_PLAN_FEATURES.free;
+      } else {
+        currentPlan = subscription.planType;
+        planFeatures = subscription.features || DEFAULT_PLAN_FEATURES[currentPlan];
+      }
+    } else {
+      // No subscription found, user is on free plan
+      console.log('No subscription found, user is on free plan');
+    }
+    
+    console.log('Current plan:', currentPlan, 'Max QR codes:', planFeatures.maxQRCodes);
+    
+    // Attach subscription info to request
+    req.subscription = {
+      planType: currentPlan,
+      features: planFeatures,
+      status: subscription?.status || 'active'
+    };
+    
+    // Check QR code creation limit for POST requests
+    if (req.method === 'POST') {
+      const qrCodeCount = await QRCode.countDocuments({ user: userId }); // Fix: use 'user' field, not 'userId'
+      console.log('Current QR code count:', qrCodeCount, 'Limit:', planFeatures.maxQRCodes);
+      
+      if (planFeatures.maxQRCodes !== -1 && qrCodeCount >= planFeatures.maxQRCodes) {
+        console.log('QR code limit exceeded');
         return res.status(403).json({
           success: false,
-          message: `QR code limit reached. Your ${subscription.planType} plan allows ${subscription.features.maxQRCodes} QR codes.`,
+          message: `QR code limit reached. Your ${currentPlan} plan allows ${planFeatures.maxQRCodes} QR codes. You currently have ${qrCodeCount} QR codes.`,
           upgradeRequired: true,
-          currentPlan: subscription.planType
+          currentPlan: currentPlan,
+          currentCount: qrCodeCount,
+          maxAllowed: planFeatures.maxQRCodes
         });
       }
     }
 
+    console.log('Subscription check passed');
     next();
   } catch (error) {
     console.error('Subscription check error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error checking subscription limits'
+      message: 'Error checking subscription limits',
+      error: error.message
     });
   }
 };

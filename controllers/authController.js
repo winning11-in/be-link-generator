@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Subscription from '../models/Subscription.js';
 import { generateToken } from '../utils/jwt.js';
 import multer from 'multer';
 import path from 'path';
@@ -69,6 +70,25 @@ export const signup = async (req, res) => {
     });
 
     if (user) {
+      // Create default free subscription for new user
+      await Subscription.create({
+        userId: user._id,
+        planType: 'free',
+        status: 'active',
+        startDate: new Date(),
+        endDate: null, // Free plan never expires
+        features: {
+          maxQRCodes: 5,
+          maxScansPerQR: 100,
+          customDomains: false,
+          analytics: false,
+          apiAccess: false,
+          prioritySupport: false
+        }
+      });
+
+      console.log('Created free subscription for new user:', user._id);
+
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -85,6 +105,8 @@ export const signup = async (req, res) => {
         removeWatermark: user.removeWatermark,
         watermarkText: user.watermarkText,
         whiteLabel: user.whiteLabel,
+        subscriptionPlan: 'free',
+        subscriptionStatus: 'active',
         token: generateToken(user._id),
       });
     } else {

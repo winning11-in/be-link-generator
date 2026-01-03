@@ -1,5 +1,6 @@
 import User from '../models/User.js';
 import QRCode from '../models/QRCode.js';
+import Subscription from '../models/Subscription.js';
 
 // @desc    Get all users with their full details and created QR codes (admin only)
 // @route   GET /api/admin/users
@@ -91,12 +92,205 @@ export const deleteUser = async (req, res) => {
     // Delete user's QR codes
     await QRCode.deleteMany({ user: userId });
 
+    // Delete user's subscription
+    await Subscription.deleteOne({ userId });
+
     await User.findByIdAndDelete(userId);
 
     return res.json({ success: true, message: 'User deleted' });
   } catch (error) {
     console.error('Admin deleteUser error:', error);
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Admin endpoint to fix user limits and clean up excess QR codes
+export const enforceUserLimits = async (req, res) => {
+  try {
+    const { dryRun = true } = req.body; // If true, only report what would be done
+    
+    console.log(`Starting limit enforcement (dry run: ${dryRun})...`);
+    
+    const issues = [];
+    const fixes = [];
+    
+    // Get all users
+    const users = await User.find({});
+    
+    for (const user of users) {
+      const subscription = await Subscription.findOne({ userId: user._id });
+      const qrCodes = await QRCode.find({ user: user._id }).sort({ createdAt: 1 }); // Oldest first
+      
+      let maxAllowed = 5; // Default free plan
+      let planType = 'free';
+      
+      if (subscription && subscription.features) {
+        maxAllowed = subscription.features.maxQRCodes;
+        planType = subscription.planType;
+      }
+      
+      if (maxAllowed !== -1 && qrCodes.length > maxAllowed) {
+        const excess = qrCodes.length - maxAllowed;
+        issues.push({
+          userId: user._id,
+          email: user.email,
+          planType,
+          maxAllowed,
+          current: qrCodes.length,
+          excess
+        });
+        
+        if (!dryRun) {
+          // Keep the newest QR codes, disable the oldest ones
+          const qrCodesToDisable = qrCodes.slice(0, excess);
+          
+          for (const qr of qrCodesToDisable) {
+            qr.isActive = false;
+            await qr.save();
+          }
+          
+          fixes.push({
+            userId: user._id,
+            email: user.email,
+            disabledCount: excess
+          });
+        }
+      }
+      
+      // Ensure user has subscription record
+      if (!subscription) {
+        issues.push({
+          userId: user._id,
+          email: user.email,
+          issue: 'No subscription record',
+          planType: 'missing'
+        });
+        
+        if (!dryRun) {
+          await Subscription.create({
+            userId: user._id,
+            planType: 'free',
+            status: 'active',
+            startDate: new Date(),
+            endDate: null,
+            features: {
+              maxQRCodes: 5,
+              maxScansPerQR: 100,
+              customDomains: false,
+              analytics: false,
+              apiAccess: false,
+              prioritySupport: false
+            }
+          });
+          
+          user.subscriptionPlan = 'free';
+          user.subscriptionStatus = 'active';
+          await user.save();
+          
+          fixes.push({
+            userId: user._id,
+            email: user.email,
+            fix: 'Created free subscription'
+          });
+        }
+      }
+    }
+    
+    const response = {
+      success: true,
+      dryRun,
+      summary: {
+        totalUsers: users.length,
+        usersWithIssues: issues.length,
+        fixesApplied: dryRun ? 0 : fixes.length
+      },
+      issues,
+      fixes: dryRun ? [] : fixes
+    };
+    
+    if (dryRun) {
+      response.message = 'Dry run completed. Set dryRun=false to apply fixes.';
+    } else {
+      response.message = 'Limits enforced successfully.';
+    }
+    
+    res.status(200).json(response);
+    
+  } catch (error) {
+    console.error('Enforce limits error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error enforcing limits',
+      error: error.message
+    });
+  }
+};
+
+// Get system stats
+export const getSystemStats = async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalQRCodes,
+      totalSubscriptions,
+      freeUsers,
+      basicUsers,
+      proUsers,
+      enterpriseUsers
+    ] = await Promise.all([
+      User.countDocuments({}),
+      QRCode.countDocuments({}),
+      Subscription.countDocuments({}),
+      Subscription.countDocuments({ planType: 'free' }),
+      Subscription.countDocuments({ planType: 'basic' }),
+      Subscription.countDocuments({ planType: 'pro' }),
+      Subscription.countDocuments({ planType: 'enterprise' })
+    ]);
+    
+    // Find users with excess QR codes
+    const usersWithExcess = [];
+    const subscriptions = await Subscription.find({});
+    
+    for (const sub of subscriptions) {
+      if (sub.features && sub.features.maxQRCodes !== -1) {
+        const qrCount = await QRCode.countDocuments({ user: sub.userId });
+        if (qrCount > sub.features.maxQRCodes) {
+          const user = await User.findById(sub.userId);
+          usersWithExcess.push({
+            email: user?.email,
+            planType: sub.planType,
+            maxAllowed: sub.features.maxQRCodes,
+            current: qrCount,
+            excess: qrCount - sub.features.maxQRCodes
+          });
+        }
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalQRCodes,
+        totalSubscriptions,
+        planDistribution: {
+          free: freeUsers,
+          basic: basicUsers,
+          pro: proUsers,
+          enterprise: enterpriseUsers
+        },
+        usersWithExcess: usersWithExcess.length,
+        excessDetails: usersWithExcess
+      }
+    });
+    
+  } catch (error) {
+    console.error('System stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching system stats',
+      error: error.message
+    });
   }
 };
 

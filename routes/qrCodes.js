@@ -12,6 +12,7 @@ import {
   getQRCodeScans,
   getQRCodeAnalytics,
 } from '../controllers/scanController.js';
+import { checkUserLimits } from '../controllers/limitsController.js';
 import { protect } from '../middleware/auth.js';
 import { checkSubscriptionLimits } from '../middleware/subscription.js';
 
@@ -19,6 +20,9 @@ const router = express.Router();
 
 // Stats endpoint (must be before /:id routes)
 router.get('/stats', protect, getStats);
+
+// Test endpoint to check limits
+router.get('/limits', protect, checkUserLimits);
 
 router.route('/')
   .get(protect, getUserQRCodes)
