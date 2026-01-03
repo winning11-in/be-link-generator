@@ -27,10 +27,9 @@ const PLANS = {
     features: {
       maxQRCodes: 50,
       maxScansPerQR: 1000,
-      customDomains: false,
       analytics: true,
-      apiAccess: false,
-      prioritySupport: false
+      whiteLabel: false,
+      removeWatermark: false
     }
   },
   pro: {
@@ -39,10 +38,9 @@ const PLANS = {
     features: {
       maxQRCodes: 200,
       maxScansPerQR: 10000,
-      customDomains: true,
       analytics: true,
-      apiAccess: true,
-      prioritySupport: false
+      whiteLabel: true,
+      removeWatermark: true
     }
   },
   enterprise: {
@@ -51,10 +49,9 @@ const PLANS = {
     features: {
       maxQRCodes: -1, // Unlimited
       maxScansPerQR: -1, // Unlimited
-      customDomains: true,
       analytics: true,
-      apiAccess: true,
-      prioritySupport: true
+      whiteLabel: true,
+      removeWatermark: true
     }
   }
 };

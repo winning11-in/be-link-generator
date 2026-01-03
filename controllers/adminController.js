@@ -176,10 +176,9 @@ export const enforceUserLimits = async (req, res) => {
             features: {
               maxQRCodes: 5,
               maxScansPerQR: 100,
-              customDomains: false,
               analytics: false,
-              apiAccess: false,
-              prioritySupport: false
+              whiteLabel: false,
+              removeWatermark: false
             }
           });
           
