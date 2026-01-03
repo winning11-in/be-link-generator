@@ -23,7 +23,9 @@ const subscriptionSchema = new mongoose.Schema({
   },
   endDate: {
     type: Date,
-    required: true
+    required: function() {
+      return this.planType !== 'free'; // Only required for paid plans
+    }
   },
   paymentId: {
     type: mongoose.Schema.Types.ObjectId,
