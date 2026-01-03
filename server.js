@@ -9,6 +9,8 @@ import contactRoutes from './routes/contacts.js';
 import uploadsRoutes from './routes/uploads.js';
 import redirectRoutes from './routes/redirects.js';
 import adminRoutes from './routes/admin.js';
+import paymentRoutes from './routes/payments.js';
+import webhookRoutes from './routes/webhooks.js';
 import { connectDB } from './config/db.js';
 
 dotenv.config();
@@ -21,7 +23,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000','http://localhost:3000/', 'http://localhost:5173', 'https://fe-link-generator.vercel.app','http://localhost:8080','https://qr-craft-studio.vercel.app',"https://lovable.dev","https://lovable.dev/projects/1b715cad-150e-47b1-8b6a-2f9b49abf9a1", "https://id-preview--1b715cad-150e-47b1-8b6a-2f9b49abf9a1.lovable.app"],
+  origin: ['http://localhost:3000','http://localhost:3000/', 'http://localhost:5173', 'http://localhost:8080', 'http://localhost:8081', 'https://fe-link-generator.vercel.app','https://qr-craft-studio.vercel.app',"https://lovable.dev","https://lovable.dev/projects/1b715cad-150e-47b1-8b6a-2f9b49abf9a1", "https://id-preview--1b715cad-150e-47b1-8b6a-2f9b49abf9a1.lovable.app"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -36,6 +38,8 @@ app.use('/api/qrcodes', qrCodeRoutes);
 app.use('/api/scans', scanRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/uploads', uploadsRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Admin routes
 app.use('/api/admin', adminRoutes);

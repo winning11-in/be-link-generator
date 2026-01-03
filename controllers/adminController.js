@@ -1,5 +1,7 @@
 import User from '../models/User.js';
 import QRCode from '../models/QRCode.js';
+import Subscription from '../models/Subscription.js';
+import Payment from '../models/Payment.js';
 
 // @desc    Get all users with their full details and created QR codes (admin only)
 // @route   GET /api/admin/users
@@ -29,7 +31,9 @@ export const getAllUsersData = async (req, res) => {
 
     // Load QR codes for returned users and group by user id
     const userIds = users.map((u) => u._id);
-    const qrcodes = userIds.length ? await QRCode.find({ user: { $in: userIds } }).lean() : [];
+    const qrcodes = userIds.length ? await QRCode.find({ user: { $in: userIds } })
+      .select('_id name type content scanCount createdAt status user')
+      .lean() : [];
     const qrsByUser = qrcodes.reduce((acc, q) => {
       const uid = q.user?.toString() || 'unknown';
       (acc[uid] = acc[uid] || []).push(q);
@@ -91,6 +95,9 @@ export const deleteUser = async (req, res) => {
     // Delete user's QR codes
     await QRCode.deleteMany({ user: userId });
 
+    // Delete user's subscription
+    await Subscription.deleteOne({ userId });
+
     await User.findByIdAndDelete(userId);
 
     return res.json({ success: true, message: 'User deleted' });
@@ -100,4 +107,291 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser };
+// Admin endpoint to fix user limits and clean up excess QR codes
+export const enforceUserLimits = async (req, res) => {
+  try {
+    const { dryRun = true } = req.body; // If true, only report what would be done
+    
+    console.log(`Starting limit enforcement (dry run: ${dryRun})...`);
+    
+    const issues = [];
+    const fixes = [];
+    
+    // Get all users
+    const users = await User.find({});
+    
+    for (const user of users) {
+      const subscription = await Subscription.findOne({ userId: user._id });
+      const qrCodes = await QRCode.find({ user: user._id }).sort({ createdAt: 1 }); // Oldest first
+      
+      let maxAllowed = 5; // Default free plan
+      let planType = 'free';
+      
+      if (subscription && subscription.features) {
+        maxAllowed = subscription.features.maxQRCodes;
+        planType = subscription.planType;
+      }
+      
+      if (maxAllowed !== -1 && qrCodes.length > maxAllowed) {
+        const excess = qrCodes.length - maxAllowed;
+        issues.push({
+          userId: user._id,
+          email: user.email,
+          planType,
+          maxAllowed,
+          current: qrCodes.length,
+          excess
+        });
+        
+        if (!dryRun) {
+          // Keep the newest QR codes, disable the oldest ones
+          const qrCodesToDisable = qrCodes.slice(0, excess);
+          
+          for (const qr of qrCodesToDisable) {
+            qr.isActive = false;
+            await qr.save();
+          }
+          
+          fixes.push({
+            userId: user._id,
+            email: user.email,
+            disabledCount: excess
+          });
+        }
+      }
+      
+      // Ensure user has subscription record
+      if (!subscription) {
+        issues.push({
+          userId: user._id,
+          email: user.email,
+          issue: 'No subscription record',
+          planType: 'missing'
+        });
+        
+        if (!dryRun) {
+          await Subscription.create({
+            userId: user._id,
+            planType: 'free',
+            status: 'active',
+            startDate: new Date(),
+            endDate: null,
+            features: {
+              maxQRCodes: 5,
+              maxScansPerQR: 100,
+              analytics: false,
+              whiteLabel: false,
+              removeWatermark: false
+            }
+          });
+          
+          user.subscriptionPlan = 'free';
+          user.subscriptionStatus = 'active';
+          await user.save();
+          
+          fixes.push({
+            userId: user._id,
+            email: user.email,
+            fix: 'Created free subscription'
+          });
+        }
+      }
+    }
+    
+    const response = {
+      success: true,
+      dryRun,
+      summary: {
+        totalUsers: users.length,
+        usersWithIssues: issues.length,
+        fixesApplied: dryRun ? 0 : fixes.length
+      },
+      issues,
+      fixes: dryRun ? [] : fixes
+    };
+    
+    if (dryRun) {
+      response.message = 'Dry run completed. Set dryRun=false to apply fixes.';
+    } else {
+      response.message = 'Limits enforced successfully.';
+    }
+    
+    res.status(200).json(response);
+    
+  } catch (error) {
+    console.error('Enforce limits error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error enforcing limits',
+      error: error.message
+    });
+  }
+};
+
+// Get system stats
+export const getSystemStats = async (req, res) => {
+  try {
+    const [
+      totalUsers,
+      totalQRCodes,
+      totalSubscriptions,
+      freeUsers,
+      basicUsers,
+      proUsers,
+      enterpriseUsers
+    ] = await Promise.all([
+      User.countDocuments({}),
+      QRCode.countDocuments({}),
+      Subscription.countDocuments({}),
+      Subscription.countDocuments({ planType: 'free' }),
+      Subscription.countDocuments({ planType: 'basic' }),
+      Subscription.countDocuments({ planType: 'pro' }),
+      Subscription.countDocuments({ planType: 'enterprise' })
+    ]);
+    
+    // Find users with excess QR codes
+    const usersWithExcess = [];
+    const subscriptions = await Subscription.find({});
+    
+    for (const sub of subscriptions) {
+      if (sub.features && sub.features.maxQRCodes !== -1) {
+        const qrCount = await QRCode.countDocuments({ user: sub.userId });
+        if (qrCount > sub.features.maxQRCodes) {
+          const user = await User.findById(sub.userId);
+          usersWithExcess.push({
+            email: user?.email,
+            planType: sub.planType,
+            maxAllowed: sub.features.maxQRCodes,
+            current: qrCount,
+            excess: qrCount - sub.features.maxQRCodes
+          });
+        }
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalQRCodes,
+        totalSubscriptions,
+        planDistribution: {
+          free: freeUsers,
+          basic: basicUsers,
+          pro: proUsers,
+          enterprise: enterpriseUsers
+        },
+        usersWithExcess: usersWithExcess.length,
+        excessDetails: usersWithExcess
+      }
+    });
+    
+  } catch (error) {
+    console.error('System stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching system stats',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get all subscriptions and payments data (admin only)
+// @route   GET /api/admin/subscriptions
+// @access  Admin
+export const getSubscriptionsData = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const search = (req.query.search || '').trim();
+    const filter = {};
+    
+    // Get subscription stats
+    const totalSubscriptions = await Subscription.countDocuments();
+    const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+    const totalPayments = await Payment.countDocuments();
+    const totalRevenue = await Payment.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    const conversionRate = totalSubscriptions > 0 
+      ? ((await Subscription.countDocuments({ planType: { $ne: 'free' } })) / totalSubscriptions * 100).toFixed(2)
+      : 0;
+      
+    // Get subscriptions with user details
+    let subscriptionFilter = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+      subscriptionFilter.userId = { $in: users.map(u => u._id) };
+    }
+    
+    const totalSubs = await Subscription.countDocuments(subscriptionFilter);
+    const subscriptions = await Subscription.find(subscriptionFilter)
+      .populate('userId', 'name email profilePicture createdAt')
+      .populate('paymentId')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+      
+    // Get payments with user details
+    let paymentFilter = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { email: { $regex: search, $options: 'i' } }
+        ]
+      }).select('_id');
+      paymentFilter.userId = { $in: users.map(u => u._id) };
+    }
+    
+    const totalPaymentsCount = await Payment.countDocuments(paymentFilter);
+    const payments = await Payment.find(paymentFilter)
+      .populate('userId', 'name email profilePicture createdAt')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalRevenue: totalRevenue[0]?.total || 0,
+          activeSubscriptions,
+          totalPayments,
+          conversionRate: parseFloat(conversionRate)
+        },
+        subscriptions: {
+          data: subscriptions,
+          total: totalSubs,
+          page,
+          limit
+        },
+        payments: {
+          data: payments,
+          total: totalPaymentsCount,
+          page,
+          limit
+        }
+      }
+    });
+    
+  } catch (error) {
+    console.error('Subscriptions data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching subscriptions data',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData };
