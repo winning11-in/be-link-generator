@@ -30,7 +30,9 @@ export const getAllUsersData = async (req, res) => {
 
     // Load QR codes for returned users and group by user id
     const userIds = users.map((u) => u._id);
-    const qrcodes = userIds.length ? await QRCode.find({ user: { $in: userIds } }).lean() : [];
+    const qrcodes = userIds.length ? await QRCode.find({ user: { $in: userIds } })
+      .select('_id name type content scanCount createdAt status user')
+      .lean() : [];
     const qrsByUser = qrcodes.reduce((acc, q) => {
       const uid = q.user?.toString() || 'unknown';
       (acc[uid] = acc[uid] || []).push(q);
