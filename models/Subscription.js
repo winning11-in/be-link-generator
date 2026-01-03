@@ -41,19 +41,15 @@ const subscriptionSchema = new mongoose.Schema({
       type: Number,
       default: 100 // Free plan limit
     },
-    customDomains: {
-      type: Boolean,
-      default: false
-    },
     analytics: {
       type: Boolean,
       default: false
     },
-    apiAccess: {
+    whiteLabel: {
       type: Boolean,
       default: false
     },
-    prioritySupport: {
+    removeWatermark: {
       type: Boolean,
       default: false
     }

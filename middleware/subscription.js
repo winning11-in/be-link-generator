@@ -7,34 +7,30 @@ const DEFAULT_PLAN_FEATURES = {
   free: {
     maxQRCodes: 5,
     maxScansPerQR: 100,
-    customDomains: false,
     analytics: false,
-    apiAccess: false,
-    prioritySupport: false
+    whiteLabel: false,
+    removeWatermark: false
   },
   basic: {
     maxQRCodes: 50,
     maxScansPerQR: 1000,
-    customDomains: false,
     analytics: true,
-    apiAccess: false,
-    prioritySupport: false
+    whiteLabel: false,
+    removeWatermark: false
   },
   pro: {
     maxQRCodes: 200,
     maxScansPerQR: 10000,
-    customDomains: true,
     analytics: true,
-    apiAccess: true,
-    prioritySupport: false
+    whiteLabel: true,
+    removeWatermark: true
   },
   enterprise: {
     maxQRCodes: -1, // Unlimited
     maxScansPerQR: -1, // Unlimited
-    customDomains: true,
     analytics: true,
-    apiAccess: true,
-    prioritySupport: true
+    whiteLabel: true,
+    removeWatermark: true
   }
 };
 

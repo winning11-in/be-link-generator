@@ -164,26 +164,23 @@ const updateUserSubscription = async (paymentRecord) => {
       basic: {
         maxQRCodes: 50,
         maxScansPerQR: 1000,
-        customDomains: false,
         analytics: true,
-        apiAccess: false,
-        prioritySupport: false
+        whiteLabel: false,
+        removeWatermark: false
       },
       pro: {
         maxQRCodes: 200,
         maxScansPerQR: 10000,
-        customDomains: true,
         analytics: true,
-        apiAccess: true,
-        prioritySupport: false
+        whiteLabel: true,
+        removeWatermark: true
       },
       enterprise: {
         maxQRCodes: -1,
         maxScansPerQR: -1,
-        customDomains: true,
         analytics: true,
-        apiAccess: true,
-        prioritySupport: true
+        whiteLabel: true,
+        removeWatermark: true
       }
     };
 
