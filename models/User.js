@@ -119,6 +119,16 @@ const userSchema = new mongoose.Schema(
         default: true,
       },
     },
+    subscriptionPlan: {
+      type: String,
+      enum: ['free', 'basic', 'pro', 'enterprise'],
+      default: 'free',
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ['active', 'inactive', 'expired', 'cancelled'],
+      default: 'active',
+    },
   },
   {
     timestamps: true,
