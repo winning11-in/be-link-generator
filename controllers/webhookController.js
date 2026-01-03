@@ -165,6 +165,7 @@ const updateUserSubscription = async (paymentRecord) => {
         maxQRCodes: 50,
         maxScansPerQR: 1000,
         analytics: true,
+        advancedAnalytics: false,
         whiteLabel: false,
         removeWatermark: false
       },
@@ -172,6 +173,7 @@ const updateUserSubscription = async (paymentRecord) => {
         maxQRCodes: 200,
         maxScansPerQR: 10000,
         analytics: true,
+        advancedAnalytics: true,
         whiteLabel: true,
         removeWatermark: true
       },
@@ -179,6 +181,7 @@ const updateUserSubscription = async (paymentRecord) => {
         maxQRCodes: -1,
         maxScansPerQR: -1,
         analytics: true,
+        advancedAnalytics: true,
         whiteLabel: true,
         removeWatermark: true
       }

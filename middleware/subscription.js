@@ -8,6 +8,7 @@ const DEFAULT_PLAN_FEATURES = {
     maxQRCodes: 5,
     maxScansPerQR: 100,
     analytics: false,
+    advancedAnalytics: false,
     whiteLabel: false,
     removeWatermark: false
   },
@@ -15,6 +16,7 @@ const DEFAULT_PLAN_FEATURES = {
     maxQRCodes: 50,
     maxScansPerQR: 1000,
     analytics: true,
+    advancedAnalytics: false,
     whiteLabel: false,
     removeWatermark: false
   },
@@ -22,6 +24,7 @@ const DEFAULT_PLAN_FEATURES = {
     maxQRCodes: 200,
     maxScansPerQR: 10000,
     analytics: true,
+    advancedAnalytics: true,
     whiteLabel: true,
     removeWatermark: true
   },
@@ -29,6 +32,7 @@ const DEFAULT_PLAN_FEATURES = {
     maxQRCodes: -1, // Unlimited
     maxScansPerQR: -1, // Unlimited
     analytics: true,
+    advancedAnalytics: true,
     whiteLabel: true,
     removeWatermark: true
   }

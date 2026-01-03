@@ -45,6 +45,10 @@ const subscriptionSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
+    advancedAnalytics: {
+      type: Boolean,
+      default: false
+    },
     whiteLabel: {
       type: Boolean,
       default: false

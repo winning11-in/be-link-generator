@@ -28,6 +28,7 @@ const PLANS = {
       maxQRCodes: 50,
       maxScansPerQR: 1000,
       analytics: true,
+      advancedAnalytics: false,
       whiteLabel: false,
       removeWatermark: false
     }
@@ -39,6 +40,7 @@ const PLANS = {
       maxQRCodes: 200,
       maxScansPerQR: 10000,
       analytics: true,
+      advancedAnalytics: true,
       whiteLabel: true,
       removeWatermark: true
     }
@@ -50,6 +52,7 @@ const PLANS = {
       maxQRCodes: -1, // Unlimited
       maxScansPerQR: -1, // Unlimited
       analytics: true,
+      advancedAnalytics: true,
       whiteLabel: true,
       removeWatermark: true
     }
