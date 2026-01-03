@@ -23,7 +23,7 @@ const getRazorpayInstance = () => {
 const PLANS = {
   basic: {
     name: 'Basic Plan',
-    price: 299, // ₹299
+    price: 10, // ₹10
     features: {
       maxQRCodes: 50,
       maxScansPerQR: 1000,
@@ -35,7 +35,7 @@ const PLANS = {
   },
   pro: {
     name: 'Pro Plan', 
-    price: 599, // ₹599
+    price: 15, // ₹15
     features: {
       maxQRCodes: 200,
       maxScansPerQR: 10000,
@@ -47,7 +47,7 @@ const PLANS = {
   },
   enterprise: {
     name: 'Enterprise Plan',
-    price: 1299, // ₹1299
+    price: 12, // ₹12
     features: {
       maxQRCodes: -1, // Unlimited
       maxScansPerQR: -1, // Unlimited
