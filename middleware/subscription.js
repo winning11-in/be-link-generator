@@ -6,11 +6,14 @@ import User from '../models/User.js';
 const DEFAULT_PLAN_FEATURES = {
   free: {
     maxQRCodes: 5,
-    maxScansPerQR: 100,
+    maxScansPerQR: 20,
     analytics: false,
     advancedAnalytics: false,
     whiteLabel: false,
-    removeWatermark: false
+    removeWatermark: false,
+    passwordProtection: false,
+    expirationDate: false,
+    customScanLimit: false
   },
   basic: {
     maxQRCodes: 50,
@@ -18,7 +21,10 @@ const DEFAULT_PLAN_FEATURES = {
     analytics: true,
     advancedAnalytics: false,
     whiteLabel: false,
-    removeWatermark: false
+    removeWatermark: false,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
   },
   pro: {
     maxQRCodes: 200,
@@ -26,7 +32,10 @@ const DEFAULT_PLAN_FEATURES = {
     analytics: true,
     advancedAnalytics: true,
     whiteLabel: true,
-    removeWatermark: true
+    removeWatermark: true,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
   },
   enterprise: {
     maxQRCodes: -1, // Unlimited
@@ -34,7 +43,10 @@ const DEFAULT_PLAN_FEATURES = {
     analytics: true,
     advancedAnalytics: true,
     whiteLabel: true,
-    removeWatermark: true
+    removeWatermark: true,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
   }
 };
 

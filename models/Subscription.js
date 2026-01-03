@@ -56,6 +56,18 @@ const subscriptionSchema = new mongoose.Schema({
     removeWatermark: {
       type: Boolean,
       default: false
+    },
+    passwordProtection: {
+      type: Boolean,
+      default: false
+    },
+    expirationDate: {
+      type: Boolean,
+      default: false
+    },
+    customScanLimit: {
+      type: Boolean,
+      default: false
     }
   },
   createdAt: {
