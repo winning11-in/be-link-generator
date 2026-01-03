@@ -100,7 +100,10 @@ export const createOrder = async (req, res) => {
     const plan = PLANS[planType];
     const amount = plan.price * duration * 100; // Amount in paise
     const currency = 'INR';
-    const receipt = `order_${userId}_${Date.now()}`;
+    // Create a short receipt (max 40 chars) using user ID substring and short timestamp
+    const shortUserId = userId.slice(-8); // Last 8 chars of userId
+    const shortTimestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
+    const receipt = `ord_${shortUserId}_${shortTimestamp}`;
 
     const options = {
       amount,
