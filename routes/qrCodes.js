@@ -13,6 +13,7 @@ import {
   getQRCodeAnalytics,
 } from '../controllers/scanController.js';
 import { protect } from '../middleware/auth.js';
+import { checkSubscriptionLimits } from '../middleware/subscription.js';
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ router.get('/stats', protect, getStats);
 
 router.route('/')
   .get(protect, getUserQRCodes)
-  .post(protect, createQRCode);
+  .post(protect, checkSubscriptionLimits, createQRCode);
 
 router.route('/:id')
   .get(getQRCode)  // Make public so scan redirect can fetch QR data
