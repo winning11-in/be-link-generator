@@ -30,7 +30,10 @@ const PLANS = {
       analytics: true,
       advancedAnalytics: false,
       whiteLabel: false,
-      removeWatermark: false
+      removeWatermark: false,
+      passwordProtection: true,
+      expirationDate: true,
+      customScanLimit: true
     }
   },
   pro: {
@@ -42,7 +45,10 @@ const PLANS = {
       analytics: true,
       advancedAnalytics: true,
       whiteLabel: true,
-      removeWatermark: true
+      removeWatermark: true,
+      passwordProtection: true,
+      expirationDate: true,
+      customScanLimit: true
     }
   },
   enterprise: {
@@ -54,7 +60,10 @@ const PLANS = {
       analytics: true,
       advancedAnalytics: true,
       whiteLabel: true,
-      removeWatermark: true
+      removeWatermark: true,
+      passwordProtection: true,
+      expirationDate: true,
+      customScanLimit: true
     }
   }
 };

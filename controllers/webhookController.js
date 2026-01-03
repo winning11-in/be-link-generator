@@ -167,7 +167,10 @@ const updateUserSubscription = async (paymentRecord) => {
         analytics: true,
         advancedAnalytics: false,
         whiteLabel: false,
-        removeWatermark: false
+        removeWatermark: false,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
       },
       pro: {
         maxQRCodes: 200,
@@ -175,7 +178,10 @@ const updateUserSubscription = async (paymentRecord) => {
         analytics: true,
         advancedAnalytics: true,
         whiteLabel: true,
-        removeWatermark: true
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
       },
       enterprise: {
         maxQRCodes: -1,
@@ -183,7 +189,10 @@ const updateUserSubscription = async (paymentRecord) => {
         analytics: true,
         advancedAnalytics: true,
         whiteLabel: true,
-        removeWatermark: true
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
       }
     };
 
