@@ -142,7 +142,8 @@ const userSchema = new mongoose.Schema(
 // Hash password before saving
 userSchema.pre('save', async function () {
   // Skip password hashing if password is not modified or if it's a Google user
-  if (!this.isModified('password') || !this.password) {
+  // Also skip if password is already hashed (starts with $2b$ for bcrypt)
+  if (!this.isModified('password') || !this.password || this.password.startsWith('$2b$')) {
     return;
   }
   const salt = await bcrypt.genSalt(10);
@@ -165,6 +166,8 @@ userSchema.methods.setPassword = async function (newPassword) {
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(newPassword, salt);
+  // Mark password as modified but don't trigger pre-save hook double hashing
+  this.markModified('password');
 };
 
 const User = mongoose.model('User', userSchema);

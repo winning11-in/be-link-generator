@@ -394,16 +394,16 @@ export const changePassword = async (req, res, next) => {
       return res.status(400).json({ message: 'Please provide current and new password' });
     }
 
-    if (newPassword.length < 8) {
-      return res.status(400).json({ message: 'New password must be at least 8 characters' });
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
     }
 
-    const user = await User.findById(req.user._1d || req.user._id).select('+password');
+    const user = await User.findById(req.user._id).select('+password');
     if (!user || !(await user.matchPassword(currentPassword))) {
       return res.status(401).json({ message: 'Current password is incorrect' });
     }
 
-    user.password = newPassword;
+    await user.setPassword(newPassword);
     await user.save();
 
     res.json({ success: true, message: 'Password updated successfully' });
