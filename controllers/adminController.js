@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import QRCode from '../models/QRCode.js';
 import Subscription from '../models/Subscription.js';
 import Payment from '../models/Payment.js';
+import { cleanupExpiredOrders, getCleanupStats } from '../utils/cleanupTasks.js';
 
 // @desc    Get all users with their full details and created QR codes (admin only)
 // @route   GET /api/admin/users
@@ -297,21 +298,27 @@ export const getSystemStats = async (req, res) => {
 };
 
 // @desc    Get all subscriptions and payments data (admin only)
-// @route   GET /api/admin/subscriptions
+// @route   GET /api/admin/subscriptions  
 // @access  Admin
 export const getSubscriptionsData = async (req, res) => {
   try {
+    // Clean up expired unpaid orders first
+    await Payment.deleteMany({
+      status: 'created',
+      expiresAt: { $lt: new Date() }
+    });
+
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const search = (req.query.search || '').trim();
     const filter = {};
     
-    // Get subscription stats
+    // Get subscription stats - only count successful payments
     const totalSubscriptions = await Subscription.countDocuments();
     const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
-    const totalPayments = await Payment.countDocuments();
+    const totalPayments = await Payment.countDocuments({ status: 'paid' }); // Only count paid payments
     const totalRevenue = await Payment.aggregate([
-      { $match: { status: 'paid' } },
+      { $match: { status: 'paid' } }, // Only sum paid payments
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     
@@ -340,8 +347,8 @@ export const getSubscriptionsData = async (req, res) => {
       .limit(limit)
       .lean();
       
-    // Get payments with user details
-    let paymentFilter = {};
+    // Get payments with user details - ONLY show successful payments
+    let paymentFilter = { status: 'paid' }; // Only show paid payments
     if (search) {
       const users = await User.find({
         $or: [
@@ -394,4 +401,32 @@ export const getSubscriptionsData = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData };
+// @desc    Cleanup expired orders and get cleanup stats (admin only)
+// @route   POST /api/admin/cleanup
+// @access  Admin
+export const cleanupOrders = async (req, res) => {
+  try {
+    const statsBefore = await getCleanupStats();
+    const deletedCount = await cleanupExpiredOrders();
+    const statsAfter = await getCleanupStats();
+    
+    res.json({
+      success: true,
+      message: `Cleanup completed. Removed ${deletedCount} expired orders.`,
+      stats: {
+        before: statsBefore,
+        after: statsAfter,
+        deletedCount
+      }
+    });
+  } catch (error) {
+    console.error('Admin cleanup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during cleanup',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders };

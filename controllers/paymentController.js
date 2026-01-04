@@ -324,12 +324,19 @@ export const getPaymentHistory = async (req, res) => {
     const userId = req.user.id;
     const { page = 1, limit = 10 } = req.query;
 
-    const payments = await Payment.find({ userId })
+    // Only show successful payments and failed payments, not pending ones
+    const payments = await Payment.find({ 
+      userId, 
+      status: { $in: ['paid', 'failed', 'refunded'] } 
+    })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    const total = await Payment.countDocuments({ userId });
+    const total = await Payment.countDocuments({ 
+      userId, 
+      status: { $in: ['paid', 'failed', 'refunded'] } 
+    });
 
     res.status(200).json({
       success: true,

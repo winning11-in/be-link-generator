@@ -12,6 +12,7 @@ import adminRoutes from './routes/admin.js';
 import paymentRoutes from './routes/payments.js';
 import webhookRoutes from './routes/webhooks.js';
 import { connectDB } from './config/db.js';
+import { scheduleCleanup } from './utils/cleanupTasks.js';
 
 dotenv.config();
 
@@ -75,4 +76,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // Start scheduled cleanup of expired orders
+  scheduleCleanup();
 });
