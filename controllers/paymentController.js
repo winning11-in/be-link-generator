@@ -396,3 +396,48 @@ export const cancelSubscription = async (req, res) => {
     });
   }
 };
+
+// Refresh subscription features
+export const refreshSubscription = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const subscription = await Subscription.findOne({ userId });
+    
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: 'No subscription found'
+      });
+    }
+
+    // Update subscription features with correct plan features
+    subscription.features = PLANS[subscription.planType]?.features || {
+      maxQRCodes: 5,
+      maxScansPerQR: 100,
+      analytics: false,
+      advancedAnalytics: false,
+      whiteLabel: false,
+      removeWatermark: false,
+      passwordProtection: false,
+      expirationDate: false,
+      customScanLimit: false,
+    };
+
+    await subscription.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Subscription refreshed successfully',
+      subscription
+    });
+
+  } catch (error) {
+    console.error('Refresh subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error refreshing subscription',
+      error: error.message
+    });
+  }
+};

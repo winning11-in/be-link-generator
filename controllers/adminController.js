@@ -429,4 +429,95 @@ export const cleanupOrders = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders };
+// @desc    Refresh user subscription features (admin only)
+// @route   POST /api/admin/refresh-subscription/:userId
+// @access  Admin
+export const refreshUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Get user and current subscription
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    const subscription = await Subscription.findOne({ userId });
+    if (!subscription) {
+      return res.status(404).json({ success: false, message: 'Subscription not found' });
+    }
+    
+    // Define plan features (same as payment controller)
+    const PLAN_FEATURES = {
+      free: {
+        maxQRCodes: 5,
+        maxScansPerQR: 100,
+        analytics: false,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        removeWatermark: false,
+        passwordProtection: false,
+        expirationDate: false,
+        customScanLimit: false
+      },
+      basic: {
+        maxQRCodes: 50,
+        maxScansPerQR: 1000,
+        analytics: true,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        removeWatermark: false,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      },
+      pro: {
+        maxQRCodes: 200,
+        maxScansPerQR: 10000,
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      },
+      enterprise: {
+        maxQRCodes: -1,
+        maxScansPerQR: -1,
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
+    };
+    
+    // Update subscription features
+    const oldFeatures = subscription.features;
+    subscription.features = PLAN_FEATURES[subscription.planType] || PLAN_FEATURES.free;
+    await subscription.save();
+    
+    res.json({
+      success: true,
+      message: 'Subscription features refreshed successfully',
+      user: {
+        email: user.email,
+        planType: subscription.planType
+      },
+      oldFeatures,
+      newFeatures: subscription.features
+    });
+  } catch (error) {
+    console.error('Refresh subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error refreshing subscription',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription };

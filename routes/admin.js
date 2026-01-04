@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllUsersData, blockUser, deleteUser, enforceUserLimits, getSystemStats, getSubscriptionsData, cleanupOrders } from '../controllers/adminController.js';
+import { getAllUsersData, blockUser, deleteUser, enforceUserLimits, getSystemStats, getSubscriptionsData, cleanupOrders, refreshUserSubscription } from '../controllers/adminController.js';
 import adminMiddleware from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
@@ -13,5 +13,6 @@ router.get('/stats', adminMiddleware, getSystemStats);
 router.get('/subscriptions', adminMiddleware, getSubscriptionsData);
 router.post('/enforce-limits', adminMiddleware, enforceUserLimits);
 router.post('/cleanup', adminMiddleware, cleanupOrders);
+router.post('/refresh-subscription/:userId', adminMiddleware, refreshUserSubscription);
 
 export default router;

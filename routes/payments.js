@@ -6,7 +6,8 @@ import {
   verifyPayment,
   getSubscription,
   getPaymentHistory,
-  cancelSubscription
+  cancelSubscription,
+  refreshSubscription
 } from '../controllers/paymentController.js';
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.post('/verify', protect, verifyPayment);
 router.get('/subscription', protect, getSubscription);
 router.get('/history', protect, getPaymentHistory);
 router.post('/cancel', protect, cancelSubscription);
+router.post('/refresh', protect, refreshSubscription);
 
 export default router;
