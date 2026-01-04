@@ -109,9 +109,9 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
 
     // Customize subject and content based on purpose
     const subjects = {
-      verification: "QR Craft Studio - Email Verification Code",
-      reset: "QR Craft Studio - Password Reset Code",
-      forgot: "QR Craft Studio - Password Reset Code"
+      verification: "QR  Studio - Email Verification Code",
+      reset: "QR Studio - Password Reset Code",
+      forgot: "QR Studio - Password Reset Code"
     };
 
     const titles = {
@@ -132,12 +132,12 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>QR Craft Studio OTP ${titles[purpose] || titles.verification}</title>
+          <title>QR Studio OTP ${titles[purpose] || titles.verification}</title>
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin: 0;">QR Craft Studio</h1>
+              <h1 style="color: #2563eb; margin: 0;">QR Studio</h1>
               <p style="color: #6b7280; margin: 5px 0;">${titles[purpose] || titles.verification}</p>
             </div>
 
@@ -163,7 +163,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
 
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
               <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-                This is an automated message from QR Craft Studio. Please do not reply to this email.
+                This is an automated message from QR Studio. Please do not reply to this email.
               </p>
             </div>
           </div>
@@ -171,12 +171,12 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
       </html>
     `;
     sendSmtpEmail.sender = {
-      name: process.env.BREVO_FROM_NAME || 'QR Craft Studio',
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
     };
     sendSmtpEmail.to = [{ email: email }];
     sendSmtpEmail.replyTo = {
-      name: process.env.BREVO_FROM_NAME || 'QR Craft Studio',
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
     };
 
@@ -223,18 +223,18 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = '') => {
     
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-    sendSmtpEmail.subject = "QR Craft Studio - Password Reset Request";
+    sendSmtpEmail.subject = "QR Studio - Password Reset Request";
     sendSmtpEmail.htmlContent = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>QR Craft Studio Password Reset</title>
+          <title>QR Studio Password Reset</title>
         </head>
         <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #2563eb; margin: 0;">QR Craft Studio</h1>
+              <h1 style="color: #2563eb; margin: 0;">QR  Studio</h1>
               <p style="color: #6b7280; margin: 5px 0;">Password Reset Request</p>
             </div>
 
@@ -244,7 +244,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = '') => {
               ${userName ? `<p style="color: #374151; margin-bottom: 20px;">Hello ${userName},</p>` : ''}
 
               <p style="color: #374151; margin-bottom: 20px;">
-                We received a request to reset your password for your QR Craft Studio account. 
+                We received a request to reset your password for your QR Studio account. 
                 Click the button below to reset your password:
               </p>
 
@@ -273,7 +273,7 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = '') => {
 
             <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
               <p style="color: #9ca3af; font-size: 14px; margin: 0;">
-                This is an automated message from QR Craft Studio. Please do not reply to this email.
+                This is an automated message from QR Studio. Please do not reply to this email.
               </p>
             </div>
           </div>
@@ -282,12 +282,12 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = '') => {
     `;
 
     sendSmtpEmail.sender = {
-      name: process.env.BREVO_FROM_NAME || 'QR Craft Studio',
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
     };
     sendSmtpEmail.to = [{ email: email }];
     sendSmtpEmail.replyTo = {
-      name: process.env.BREVO_FROM_NAME || 'QR Craft Studio',
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
     };
 
