@@ -7,15 +7,7 @@
  * Get current date in readable format
  * @returns {string} Formatted date
  */
-const getCurrentDate = () => {
-  return new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+ 
 
 /**
  * Get user's browser and location info (mock data for now)
@@ -23,21 +15,12 @@ const getCurrentDate = () => {
  * @param {object} req - Request object
  * @returns {object} Browser and location info
  */
-const getRequestInfo = (req = null) => {
-  // This would be extracted from actual request headers in production
-  return {
-    browser: 'Chrome on Windows',
-    location: 'United States',
-    date: getCurrentDate()
-  };
-};
-
+ 
 /**
  * Password Reset OTP Email Template
  * Professional template matching the provided design
  */
-const passwordResetOTPTemplate = (email, otp, requestInfo = null) => {
-  const info = requestInfo || getRequestInfo();
+const passwordResetOTPTemplate = (email, otp) => {
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -309,9 +292,10 @@ const passwordResetOTPTemplate = (email, otp, requestInfo = null) => {
           <tr>
             <td class="email-header">
               <div class="lock-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 1C8.676 1 6 3.676 6 7v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V11a2 2 0 0 0-2-2h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v2H8V7c0-2.276 1.724-4 4-4zm0 10a2 2 0 0 1 1 3.732V18a1 1 0 1 1-2 0v-1.268A2 2 0 0 1 12 13z"/></svg>
+                <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" style="width: 48px; height: 48px; border-radius: 8px;">
               </div>
-              <div class="header-title">Password Reset Request</div>
+              <div class="header-title">QR Studio</div>
+              <div style="color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 400; margin-top: 4px;">Password Reset Request</div>
             </td>
           </tr>
           
@@ -341,19 +325,11 @@ const passwordResetOTPTemplate = (email, otp, requestInfo = null) => {
                 </p>
               </div>
               
-              <!-- Request Info -->
-              <div class="info-box">
-                <div class="info-title">Request Information</div>
-                <div class="info-row">Requested on: ${info.date}</div>
-                <div class="info-row">Browser: ${info.browser}</div>
-                <div class="info-row">Location: ${info.location}</div>
-              </div>
-              
               <div class="divider"></div>
               
               <p class="help-text">
                 If you did not make this request, your account is still secure. No changes have been made.<br><br>
-                Need help? <a href="mailto:support@qrstudio.com">Contact our support team</a>
+                Need help? <a href="https://qr-craft-studio.vercel.app/contact">Contact our support team</a>
               </p>
             </td>
           </tr>
@@ -363,12 +339,12 @@ const passwordResetOTPTemplate = (email, otp, requestInfo = null) => {
             <td class="email-footer">
               <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" class="footer-logo">
               <div class="footer-brand">QR Studio</div>
-              <div class="footer-tagline">Create Beautiful QR Codes</div>
+              <div class="footer-tagline">Professional QR Code Solutions</div>
               
               <div class="footer-links">
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Contact Us</a>
+                <a href="https://qr-craft-studio.vercel.app/privacy" class="footer-link">Privacy Policy</a>
+                <a href="https://qr-craft-studio.vercel.app/terms" class="footer-link">Terms of Service</a>
+                <a href="https://qr-craft-studio.vercel.app/contact" class="footer-link">Contact Us</a>
               </div>
               
               <p class="copyright">
@@ -389,8 +365,7 @@ const passwordResetOTPTemplate = (email, otp, requestInfo = null) => {
  * Email Verification OTP Template
  * Clean, professional verification email
  */
-const emailVerificationTemplate = (email, otp, requestInfo = null) => {
-  const info = requestInfo || getRequestInfo();
+const emailVerificationTemplate = (email, otp) => {
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -540,38 +515,6 @@ const emailVerificationTemplate = (email, otp, requestInfo = null) => {
       line-height: 1.5;
     }
     
-    .info-box {
-      background-color: #f4f4f5;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-    
-    .info-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #52525b;
-      margin-bottom: 12px;
-    }
-    
-    .info-row {
-      font-size: 13px;
-      color: #71717a;
-      margin-bottom: 6px;
-      padding-left: 20px;
-      position: relative;
-    }
-    
-    .info-row:before {
-      content: "•";
-      position: absolute;
-      left: 8px;
-    }
-    
-    .info-row:last-child {
-      margin-bottom: 0;
-    }
-    
     .divider {
       height: 1px;
       background-color: #e4e4e7;
@@ -662,9 +605,10 @@ const emailVerificationTemplate = (email, otp, requestInfo = null) => {
           <tr>
             <td class="email-header">
               <div class="verify-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-2 15l-5-5 1.414-1.414L10 14.172l7.586-7.586L19 8l-9 9z"/></svg>
+                <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" style="width: 48px; height: 48px; border-radius: 8px;">
               </div>
-              <div class="header-title">Email Verification</div>
+              <div class="header-title">QR Studio</div>
+              <div style="color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 400; margin-top: 4px;">Email Verification</div>
             </td>
           </tr>
           
@@ -694,19 +638,11 @@ const emailVerificationTemplate = (email, otp, requestInfo = null) => {
                 </p>
               </div>
               
-              <!-- Request Info -->
-              <div class="info-box">
-                <div class="info-title">Registration Information</div>
-                <div class="info-row">Signed up on: ${info.date}</div>
-                <div class="info-row">Browser: ${info.browser}</div>
-                <div class="info-row">Location: ${info.location}</div>
-              </div>
-              
               <div class="divider"></div>
               
               <p class="help-text">
                 Didn't sign up for QR Studio? You can safely ignore this email.<br><br>
-                Need help? <a href="mailto:support@qrstudio.com">Contact our support team</a>
+                Need help? <a href="https://qr-craft-studio.vercel.app/contact">Contact our support team</a>
               </p>
             </td>
           </tr>
@@ -716,12 +652,12 @@ const emailVerificationTemplate = (email, otp, requestInfo = null) => {
             <td class="email-footer">
               <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" class="footer-logo">
               <div class="footer-brand">QR Studio</div>
-              <div class="footer-tagline">Create Beautiful QR Codes</div>
+              <div class="footer-tagline">Professional QR Code Solutions</div>
               
               <div class="footer-links">
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Contact Us</a>
+                <a href="https://qr-craft-studio.vercel.app/privacy" class="footer-link">Privacy Policy</a>
+                <a href="https://qr-craft-studio.vercel.app/terms" class="footer-link">Terms of Service</a>
+                <a href="https://qr-craft-studio.vercel.app/contact" class="footer-link">Contact Us</a>
               </div>
               
               <p class="copyright">
@@ -739,8 +675,8 @@ const emailVerificationTemplate = (email, otp, requestInfo = null) => {
 };
 
 /**
- * Welcome Email Template
- * Beautiful onboarding email for new users
+ * Enhanced Welcome Email Template - PROFESSIONAL DESIGN
+ * Beautiful onboarding email for new users with prominent logo and comprehensive features
  */
 const welcomeEmailTemplate = (userName, email) => {
   return `<!DOCTYPE html>
@@ -883,6 +819,46 @@ const welcomeEmailTemplate = (userName, email) => {
       line-height: 1.4;
     }
     
+    .next-steps {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 32px 0;
+      text-align: center;
+    }
+    
+    .next-steps h3 {
+      color: #0369a1;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    
+    .next-steps p {
+      color: #0284c7;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .action-button {
+      padding: 8px 16px;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+    
+    .btn-primary { background: #0ea5e9; }
+    .btn-secondary { background: #7c3aed; }
+    .btn-success { background: #059669; }
+    
     .divider {
       height: 1px;
       background-color: #e4e4e7;
@@ -961,6 +937,16 @@ const welcomeEmailTemplate = (userName, email) => {
         grid-template-columns: 1fr !important;
         gap: 16px !important;
       }
+      
+      .action-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .action-button {
+        width: 200px;
+        text-align: center;
+      }
     }
   </style>
 </head>
@@ -973,9 +959,10 @@ const welcomeEmailTemplate = (userName, email) => {
           <tr>
             <td class="email-header">
               <div class="welcome-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-2 15l-5-5 1.414-1.414L10 14.172l7.586-7.586L19 8l-9 9z"/></svg>
+                <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" style="width: 48px; height: 48px; border-radius: 8px;">
               </div>
-              <div class="header-title">Welcome to QR Studio!</div>
+              <div class="header-title">QR Studio</div>
+              <div style="color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 400; margin-top: 4px;">Welcome to QR Studio!</div>
             </td>
           </tr>
           
@@ -985,45 +972,68 @@ const welcomeEmailTemplate = (userName, email) => {
               <p class="greeting">Hello ${userName}!</p>
               <h1 class="title">Welcome to QR Studio</h1>
               <p class="description">
-                Thank you for joining QR Studio! We're excited to help you create beautiful, custom QR codes for your business, projects, and personal use.
+                Thank you for joining QR Studio! We're excited to help you create beautiful, trackable QR codes that elevate your business and personal projects.
               </p>
               
               <center>
-                <a href="#" class="cta-button">Start Creating QR Codes</a>
+                <a href="https://qr-craft-studio.vercel.app/dashboard" class="cta-button">Start Creating QR Codes</a>
               </center>
               
-              <!-- Features Grid -->
+              <!-- Enhanced Features Grid -->
               <div class="features-grid">
                 <div class="feature-card">
-                  <div class="feature-icon">Design</div>
-                  <div class="feature-title">Custom Design</div>
-                  <div class="feature-desc">Create beautiful QR codes with custom colors, logos, and styles</div>
+                  <div class="feature-icon">Custom</div>
+                  <div class="feature-title">Custom Designs</div>
+                  <div class="feature-desc">Beautiful QR codes with custom colors, logos, frames, and patterns</div>
                 </div>
                 
                 <div class="feature-card">
                   <div class="feature-icon">Analytics</div>
-                  <div class="feature-title">Analytics</div>
-                  <div class="feature-desc">Track scans, locations, and performance of your QR codes</div>
+                  <div class="feature-title">Smart Analytics</div>
+                  <div class="feature-desc">Track scans, locations, devices, and user engagement in real-time</div>
                 </div>
                 
                 <div class="feature-card">
-                  <div class="feature-icon">Quality</div>
-                  <div class="feature-title">High Quality</div>
-                  <div class="feature-desc">Download QR codes in multiple formats including PNG, SVG</div>
+                  <div class="feature-icon">Dynamic</div>
+                  <div class="feature-title">Dynamic QR Codes</div>
+                  <div class="feature-desc">Update content without reprinting - perfect for campaigns</div>
                 </div>
                 
                 <div class="feature-card">
-                  <div class="feature-icon">Security</div>
-                  <div class="feature-title">Secure</div>
-                  <div class="feature-desc">Your data is safe with enterprise-level security</div>
+                  <div class="feature-icon">Bulk</div>
+                  <div class="feature-title">Bulk Generation</div>
+                  <div class="feature-desc">Create hundreds of QR codes at once with CSV import</div>
+                </div>
+                
+                <div class="feature-card">
+                  <div class="feature-icon">Export</div>
+                  <div class="feature-title">High Quality Export</div>
+                  <div class="feature-desc">Download in PNG, SVG, PDF formats up to 4K resolution</div>
+                </div>
+                
+                <div class="feature-card">
+                  <div class="feature-icon">Types</div>
+                  <div class="feature-title">20+ QR Types</div>
+                  <div class="feature-desc">URL, WiFi, vCard, SMS, Email, WhatsApp, and more</div>
+                </div>
+              </div>
+              
+              <!-- What's Next Section -->
+              <div class="next-steps">
+                <h3>What's Next?</h3>
+                <p>Get started with these quick actions:</p>
+                <div class="action-buttons">
+                  <a href="https://qr-craft-studio.vercel.app/create" class="action-button btn-primary">Create First QR</a>
+                  <a href="https://qr-craft-studio.vercel.app/templates" class="action-button btn-secondary">Browse Templates</a>
+                  <a href="https://qr-craft-studio.vercel.app/analytics" class="action-button btn-success">View Analytics</a>
                 </div>
               </div>
               
               <div class="divider"></div>
               
               <p class="help-text">
-                Need help getting started? <a href="mailto:support@qrstudio.com">Contact our support team</a><br>
-                or check out our <a href="#">getting started guide</a>
+                Need help getting started? <a href="https://qr-craft-studio.vercel.app/contact">Contact our support team</a><br>
+                or check out our <a href="https://qr-craft-studio.vercel.app/help">getting started guide</a>
               </p>
             </td>
           </tr>
@@ -1033,12 +1043,12 @@ const welcomeEmailTemplate = (userName, email) => {
             <td class="email-footer">
               <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" class="footer-logo">
               <div class="footer-brand">QR Studio</div>
-              <div class="footer-tagline">Create Beautiful QR Codes</div>
+              <div class="footer-tagline">Professional QR Code Solutions</div>
               
               <div class="footer-links">
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Contact Us</a>
+                <a href="https://qr-craft-studio.vercel.app/privacy" class="footer-link">Privacy Policy</a>
+                <a href="https://qr-craft-studio.vercel.app/terms" class="footer-link">Terms of Service</a>
+                <a href="https://qr-craft-studio.vercel.app/contact" class="footer-link">Contact Us</a>
               </div>
               
               <p class="copyright">
@@ -1056,37 +1066,20 @@ const welcomeEmailTemplate = (userName, email) => {
 };
 
 /**
- * Account Notification Template
- * Generic template for account-related notifications
+ * Account Notification Email Template
+ * For important account updates and security notifications
  */
-const accountNotificationTemplate = (userName, title, message, actionButton = null, type = 'info') => {
+const accountNotificationTemplate = (title, message, type = 'info', actionUrl = null, actionText = null) => {
+  // Define color scheme based on notification type
   const typeColors = {
-    info: {
-      header: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-      accent: '#0ea5e9'
-    },
-    success: {
-      header: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-      accent: '#10b981'
-    },
-    warning: {
-      header: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-      accent: '#f59e0b'
-    },
-    danger: {
-      header: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-      accent: '#ef4444'
-    }
+    info: { bg: '#f0f9ff', border: '#0ea5e9', text: '#0369a1' },
+    success: { bg: '#f0fdf4', border: '#22c55e', text: '#16a34a' },
+    warning: { bg: '#fefce8', border: '#eab308', text: '#a16207' },
+    danger: { bg: '#fef2f2', border: '#ef4444', text: '#dc2626' }
   };
-
+  
   const colors = typeColors[type] || typeColors.info;
-  const icons = {
-    info: 'Information',
-    success: 'Success',
-    warning: 'Warning',
-    danger: 'Alert'
-  };
-
+  
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1118,7 +1111,7 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
     }
     
     .email-header {
-      background: ${colors.header};
+      background: linear-gradient(135deg, ${colors.border} 0%, ${colors.text} 100%);
       padding: 40px 40px 50px;
       text-align: center;
     }
@@ -1132,11 +1125,12 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
       align-items: center;
       justify-content: center;
       margin-bottom: 16px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #ffffff;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+    }
+    
+    .notification-icon svg {
+      width: 32px;
+      height: 32px;
+      fill: #ffffff;
     }
     
     .header-title {
@@ -1153,12 +1147,6 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
       position: relative;
     }
     
-    .greeting {
-      font-size: 14px;
-      color: #71717a;
-      margin-bottom: 8px;
-    }
-    
     .title {
       font-size: 24px;
       font-weight: 700;
@@ -1166,15 +1154,15 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
       margin-bottom: 16px;
     }
     
-    .description {
+    .message {
       font-size: 15px;
       color: #52525b;
       margin-bottom: 32px;
       line-height: 1.7;
     }
     
-    .cta-button {
-      background: ${colors.accent};
+    .action-button {
+      background: linear-gradient(135deg, ${colors.border} 0%, ${colors.text} 100%);
       color: white;
       padding: 16px 32px;
       text-decoration: none;
@@ -1184,6 +1172,27 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
       font-size: 16px;
       text-align: center;
       margin: 24px 0;
+    }
+    
+    .notification-box {
+      background-color: ${colors.bg};
+      border: 1px solid ${colors.border};
+      border-left: 4px solid ${colors.border};
+      padding: 20px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 24px;
+    }
+    
+    .notification-box h3 {
+      color: ${colors.text};
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    
+    .notification-box p {
+      color: ${colors.text};
+      font-size: 14px;
+      line-height: 1.5;
     }
     
     .divider {
@@ -1271,27 +1280,35 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
           <tr>
             <td class="email-header">
               <div class="notification-icon">
-                ${icons[type]}
+                <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" style="width: 48px; height: 48px; border-radius: 8px;">
               </div>
-              <div class="header-title">${title}</div>
+              <div class="header-title">QR Studio</div>
+              <div style="color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 400; margin-top: 4px;">Account Notification</div>
             </td>
           </tr>
           
           <!-- Body -->
           <tr>
             <td class="email-body">
-              <p class="greeting">Hi ${userName},</p>
               <h1 class="title">${title}</h1>
-              <p class="description">
-                ${message}
-              </p>
+              <p class="message">${message}</p>
               
-              ${actionButton ? `<center><a href="${actionButton.url}" class="cta-button">${actionButton.text}</a></center>` : ''}
+              ${actionUrl && actionText ? `
+                <center>
+                  <a href="${actionUrl}" class="action-button">${actionText}</a>
+                </center>
+              ` : ''}
+              
+              <div class="notification-box">
+                <h3>Important Information</h3>
+                <p>This notification was sent to keep you informed about important changes to your QR Studio account.</p>
+              </div>
               
               <div class="divider"></div>
               
               <p class="help-text">
-                Need help? <a href="mailto:support@qrstudio.com">Contact our support team</a>
+                Questions about this notification? <a href="https://qr-craft-studio.vercel.app/contact">Contact our support team</a><br>
+                or visit our <a href="https://qr-craft-studio.vercel.app/help">help center</a>
               </p>
             </td>
           </tr>
@@ -1301,12 +1318,12 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
             <td class="email-footer">
               <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" class="footer-logo">
               <div class="footer-brand">QR Studio</div>
-              <div class="footer-tagline">Create Beautiful QR Codes</div>
+              <div class="footer-tagline">Professional QR Code Solutions</div>
               
               <div class="footer-links">
-                <a href="#" class="footer-link">Privacy Policy</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Contact Us</a>
+                <a href="https://qr-craft-studio.vercel.app/privacy" class="footer-link">Privacy Policy</a>
+                <a href="https://qr-craft-studio.vercel.app/terms" class="footer-link">Terms of Service</a>
+                <a href="https://qr-craft-studio.vercel.app/contact" class="footer-link">Contact Us</a>
               </div>
               
               <p class="copyright">
@@ -1323,11 +1340,10 @@ const accountNotificationTemplate = (userName, title, message, actionButton = nu
 </html>`;
 };
 
-export {
+// Export all templates
+module.exports = {
   passwordResetOTPTemplate,
   emailVerificationTemplate,
   welcomeEmailTemplate,
-  accountNotificationTemplate,
-  getCurrentDate,
-  getRequestInfo
+  accountNotificationTemplate
 };
