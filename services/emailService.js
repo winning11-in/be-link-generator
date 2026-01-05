@@ -1,6 +1,14 @@
 import SibApiV3Sdk from 'sib-api-v3-sdk';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
+import {
+  passwordResetOTPTemplate,
+  emailVerificationTemplate,
+  welcomeEmailTemplate,
+  accountNotificationTemplate,
+  getCurrentDate,
+  getRequestInfo
+} from './emailTemplates.js';
 
 // Ensure environment variables are loaded
 dotenv.config();
@@ -109,7 +117,7 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
 
     // Customize subject and content based on purpose
     const subjects = {
-      verification: "QR  Studio - Email Verification Code",
+      verification: "QR Studio - Email Verification Code",
       reset: "QR Studio - Password Reset Code",
       forgot: "QR Studio - Password Reset Code"
     };
@@ -127,81 +135,18 @@ const sendOTPEmail = async (email, otp, purpose = 'verification') => {
     };
 
     sendSmtpEmail.subject = subjects[purpose] || subjects.verification;
-    sendSmtpEmail.htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>QR Studio - ${titles[purpose] || titles.verification}</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-            
-            @media only screen and (max-width: 600px) {
-              .container { width: 100% !important; padding: 10px !important; }
-              .content-card { padding: 25px !important; margin: 10px 0 !important; }
-              .otp-code { font-size: 32px !important; letter-spacing: 4px !important; }
-              .header-logo { width: 50px !important; height: 50px !important; }
-            }
-          </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f23; line-height: 1.6;">
-          <div style="min-height: 100vh; background: #0f0f23; padding: 40px 20px;">
-            <div class="container" style="max-width: 500px; margin: 0 auto;">
-              
-              <!-- Main Content Card -->
-              <div class="content-card" style="background: white; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                
-                <!-- Logo -->
-                <div style="margin-bottom: 30px;">
-                  <img class="header-logo" src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio Logo" style="width: 60px; height: 60px; border-radius: 12px;" onerror="this.style.display='none'">
-                </div>
-
-                <!-- Title -->
-                <h1 style="margin: 0 0 30px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">
-                  Your Signup verification<br>Code
-                </h1>
-
-                <!-- OTP Code -->
-                <div style="margin: 30px 0;">
-                  <span class="otp-code" style="font-size: 48px; font-weight: 700; color: #1a1a1a; letter-spacing: 6px; font-family: 'Courier New', monospace; display: block; margin: 20px 0;">${otp}</span>
-                </div>
-
-                <!-- Warning Message -->
-                <p style="color: #888; font-size: 14px; margin: 30px 0 40px 0;">
-                  Don't share this code to anyone!
-                </p>
-
-                <!-- Security Notice -->
-                <div style="background: #fff8e1; border: 1px solid #ffcc02; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: left;">
-                  <div style="display: flex; align-items: flex-start; gap: 10px;">
-                    <span style="color: #ff9800; font-size: 16px;">⚠️</span>
-                    <div>
-                      <p style="margin: 0; color: #bf5f00; font-size: 13px; font-weight: 600;">Was this request not made by you?</p>
-                      <p style="margin: 5px 0 0 0; color: #bf5f00; font-size: 12px;">
-                        You're getting this message because this login was using Chrome<br>
-                        browser on <strong>macOS</strong> on <strong>${new Date().toLocaleDateString()}</strong>. All, If you did not initiate<br>
-                        this request, you can safely <a href="#" style="color: #1976d2; text-decoration: none;">ignore this email</a>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Footer -->
-              <div style="text-align: center; padding: 30px 20px 20px 20px;">
-                <p style="color: rgba(255,255,255,0.8); font-size: 12px; margin: 0 0 10px 0;">
-                  © 2026 QR Studio. All rights reserved.
-                </p>
-                <p style="color: rgba(255,255,255,0.6); font-size: 11px; margin: 0;">
-                  Email: winning11.in@gmail.com
-                </p>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    
+    // Use the appropriate template based on purpose
+    let htmlContent;
+    if (purpose === 'verification') {
+      htmlContent = emailVerificationTemplate(email, otp);
+    } else if (purpose === 'reset' || purpose === 'forgot') {
+      htmlContent = passwordResetOTPTemplate(email, otp);
+    } else {
+      htmlContent = emailVerificationTemplate(email, otp);
+    }
+    
+    sendSmtpEmail.htmlContent = htmlContent;
     sendSmtpEmail.sender = {
       name: process.env.BREVO_FROM_NAME || 'QR Studio',
       email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
@@ -255,100 +200,16 @@ const sendPasswordResetEmail = async (email, resetUrl, userName = '') => {
     
     const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-    sendSmtpEmail.subject = "🔐 QR Studio - Password Reset Request";
-    sendSmtpEmail.htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>QR Studio - Password Reset</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-            
-            @media only screen and (max-width: 600px) {
-              .container { width: 100% !important; padding: 10px !important; }
-              .content-card { padding: 25px !important; margin: 10px 0 !important; }
-              .reset-button { padding: 14px 25px !important; font-size: 16px !important; }
-              .header-logo { width: 50px !important; height: 50px !important; }
-            }
-          </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f23; line-height: 1.6;">
-          <div style="min-height: 100vh; background: #0f0f23; padding: 40px 20px;">
-            <div class="container" style="max-width: 500px; margin: 0 auto;">
-              
-              <!-- Main Content Card -->
-              <div class="content-card" style="background: white; border-radius: 20px; padding: 40px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.3);">
-                
-                <!-- Logo -->
-                <div style="margin-bottom: 30px;">
-                  <img class="header-logo" src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio Logo" style="width: 60px; height: 60px; border-radius: 12px;" onerror="this.style.display='none'">
-                </div>
-
-                <!-- Title -->
-                <h1 style="margin: 0 0 30px 0; font-size: 20px; font-weight: 600; color: #1a1a1a;">
-                  Password Reset<br>Request
-                </h1>
-
-                ${userName ? `<div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 12px; padding: 15px; margin-bottom: 25px; text-align: left;"><p style="margin: 0; color: #0c4a6e; font-size: 15px;">👋 <strong>Hello ${userName},</strong></p></div>` : ''}
-
-                <p style="color: #666; font-size: 14px; margin: 0 0 30px 0; line-height: 1.5; text-align: left;">
-                  We received a request to reset your password for your QR Studio account. Click the button below to create a new secure password:
-                </p>
-
-                <!-- Reset Button -->
-                <div style="margin: 30px 0;">
-                  <a href="${resetUrl}" class="reset-button" 
-                     style="background: #1a1a1a; color: white; padding: 15px 30px; text-decoration: none; border-radius: 12px; display: inline-block; font-weight: 600; font-size: 16px; text-align: center; min-width: 200px;">
-                    🔐 Reset My Password
-                  </a>
-                </div>
-
-                <!-- Alternative Link Section -->
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin: 25px 0; text-align: left;">
-                  <p style="margin: 0 0 10px 0; color: #4b5563; font-size: 14px; font-weight: 600;">🔗 Button not working?</p>
-                  <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 13px;">Copy and paste this link into your browser:</p>
-                  <div style="background: white; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; margin: 10px 0; word-break: break-all;">
-                    <a href="${resetUrl}" style="color: #1976d2; font-size: 13px; text-decoration: none; font-family: 'Courier New', monospace;">${resetUrl}</a>
-                  </div>
-                </div>
-
-                <!-- Warning Message -->
-                <p style="color: #888; font-size: 14px; margin: 30px 0;">
-                  Please use this link within 30 minutes for security.
-                </p>
-
-                <!-- Security Notice -->
-                <div style="background: #fff8e1; border: 1px solid #ffcc02; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: left;">
-                  <div style="display: flex; align-items: flex-start; gap: 10px;">
-                    <span style="color: #ff9800; font-size: 16px;">⚠️</span>
-                    <div>
-                      <p style="margin: 0; color: #bf5f00; font-size: 13px; font-weight: 600;">Was this request not made by you?</p>
-                      <p style="margin: 5px 0 0 0; color: #bf5f00; font-size: 12px;">
-                        You're getting this message because this reset was requested using Chrome<br>
-                        browser on <strong>macOS</strong> on <strong>${new Date().toLocaleDateString()}</strong>. If you did not initiate<br>
-                        this request, you can safely <a href="#" style="color: #1976d2; text-decoration: none;">ignore this email</a>.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Footer -->
-              <div style="text-align: center; padding: 30px 20px 20px 20px;">
-                <p style="color: rgba(255,255,255,0.8); font-size: 12px; margin: 0 0 10px 0;">
-                  © 2026 QR Studio. All rights reserved.
-                </p>
-                <p style="color: rgba(255,255,255,0.6); font-size: 11px; margin: 0;">
-                  Email: winning11.in@gmail.com
-                </p>
-              </div>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
+    sendSmtpEmail.subject = "QR Studio - Password Reset Request";
+    
+    // Create a more advanced password reset template (you could create a new one for links)
+    sendSmtpEmail.htmlContent = accountNotificationTemplate(
+      userName || 'User',
+      'Reset Your Password',
+      `We received a request to reset your password for your QR Studio account. Click the button below to create a new secure password. This link will expire in 30 minutes for security.`,
+      { url: resetUrl, text: 'Reset My Password' },
+      'warning'
+    );
 
     sendSmtpEmail.sender = {
       name: process.env.BREVO_FROM_NAME || 'QR Studio',
@@ -443,6 +304,88 @@ const sendVerificationOTP = async (email, purpose = 'verification') => {
 };
 
 /**
+ * Send welcome email to new users
+ * @param {string} email - User's email
+ * @param {string} userName - User's name
+ * @returns {Promise<object>} Send result
+ */
+const sendWelcomeEmail = async (email, userName) => {
+  try {
+    const apiInstance = getBrevoClient();
+    console.log('Sending welcome email - API Key configured:', !!process.env.BREVO_API_KEY);
+    
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    sendSmtpEmail.subject = "Welcome to QR Studio - Let's Get Started!";
+    sendSmtpEmail.htmlContent = welcomeEmailTemplate(userName || 'User', email);
+
+    sendSmtpEmail.sender = {
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
+      email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
+    };
+    sendSmtpEmail.to = [{ email: email }];
+    sendSmtpEmail.replyTo = {
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
+      email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
+    };
+
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Brevo welcome email API success:', result);
+    return { success: true, messageId: result.messageId };
+
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return {
+      success: false,
+      error: 'Failed to send welcome email'
+    };
+  }
+};
+
+/**
+ * Send account notification email
+ * @param {string} email - User's email
+ * @param {string} userName - User's name
+ * @param {string} title - Email title
+ * @param {string} message - Email message
+ * @param {object} actionButton - Optional action button {url, text}
+ * @param {string} type - Email type (info, success, warning, danger)
+ * @returns {Promise<object>} Send result
+ */
+const sendAccountNotification = async (email, userName, title, message, actionButton = null, type = 'info') => {
+  try {
+    const apiInstance = getBrevoClient();
+    console.log('Sending account notification - API Key configured:', !!process.env.BREVO_API_KEY);
+    
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    sendSmtpEmail.subject = `QR Studio - ${title}`;
+    sendSmtpEmail.htmlContent = accountNotificationTemplate(userName, title, message, actionButton, type);
+
+    sendSmtpEmail.sender = {
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
+      email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
+    };
+    sendSmtpEmail.to = [{ email: email }];
+    sendSmtpEmail.replyTo = {
+      name: process.env.BREVO_FROM_NAME || 'QR Studio',
+      email: process.env.BREVO_FROM_EMAIL || 'noreply@qrcraftstudio.com'
+    };
+
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log('Brevo account notification API success:', result);
+    return { success: true, messageId: result.messageId };
+
+  } catch (error) {
+    console.error('Error sending account notification:', error);
+    return {
+      success: false,
+      error: 'Failed to send account notification'
+    };
+  }
+};
+
+/**
  * Clean up expired OTPs (should be called periodically)
  */
 const cleanupExpiredOTPs = () => {
@@ -464,5 +407,7 @@ export {
   sendOTPEmail,
   sendPasswordResetEmail,
   sendVerificationOTP,
+  sendWelcomeEmail,
+  sendAccountNotification,
   cleanupExpiredOTPs
 };
