@@ -7,7 +7,13 @@
  * Get current date in readable format
  * @returns {string} Formatted date
  */
- 
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
 /**
  * Get user's browser and location info (mock data for now)
@@ -15,6 +21,14 @@
  * @param {object} req - Request object
  * @returns {object} Browser and location info
  */
+const getRequestInfo = (req = null) => {
+  // In production, extract from req.headers
+  return {
+    browser: 'Chrome',
+    location: 'Unknown',
+    ip: '***.***.***'
+  };
+};
  
 /**
  * Password Reset OTP Email Template
@@ -1341,9 +1355,11 @@ const accountNotificationTemplate = (title, message, type = 'info', actionUrl = 
 };
 
 // Export all templates
-module.exports = {
+export {
   passwordResetOTPTemplate,
   emailVerificationTemplate,
   welcomeEmailTemplate,
-  accountNotificationTemplate
+  accountNotificationTemplate,
+  getCurrentDate,
+  getRequestInfo
 };
