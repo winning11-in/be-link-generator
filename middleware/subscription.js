@@ -47,6 +47,17 @@ const DEFAULT_PLAN_FEATURES = {
     passwordProtection: true,
     expirationDate: true,
     customScanLimit: true
+  },
+  trial: {
+    maxQRCodes: -1, // Unlimited (premium level)
+    maxScansPerQR: -1, // Unlimited (premium level)
+    analytics: true,
+    advancedAnalytics: true,
+    whiteLabel: true,
+    removeWatermark: true,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
   }
 };
 

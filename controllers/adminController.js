@@ -577,10 +577,10 @@ export const updateUserSubscription = async (req, res) => {
     const { planType, endDate, customFeatures } = req.body;
 
     // Validate plan type
-    if (!['free', 'basic', 'pro', 'enterprise'].includes(planType)) {
+    if (!['free', 'basic', 'pro', 'enterprise', 'trial'].includes(planType)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid plan type. Must be free, basic, pro, or enterprise'
+        message: 'Invalid plan type. Must be free, basic, pro, enterprise, or trial'
       });
     }
 
