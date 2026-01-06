@@ -4,6 +4,54 @@ import Subscription from '../models/Subscription.js';
 import Payment from '../models/Payment.js';
 import { cleanupExpiredOrders, getCleanupStats } from '../utils/cleanupTasks.js';
 
+// Default plan features
+const DEFAULT_PLAN_FEATURES = {
+  free: {
+    maxQRCodes: 5,
+    maxScansPerQR: 20,
+    analytics: false,
+    advancedAnalytics: false,
+    whiteLabel: false,
+    removeWatermark: false,
+    passwordProtection: false,
+    expirationDate: false,
+    customScanLimit: false
+  },
+  basic: {
+    maxQRCodes: 50,
+    maxScansPerQR: 1000,
+    analytics: true,
+    advancedAnalytics: false,
+    whiteLabel: false,
+    removeWatermark: false,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
+  },
+  pro: {
+    maxQRCodes: 200,
+    maxScansPerQR: 10000,
+    analytics: true,
+    advancedAnalytics: true,
+    whiteLabel: true,
+    removeWatermark: true,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
+  },
+  enterprise: {
+    maxQRCodes: -1, // Unlimited
+    maxScansPerQR: -1, // Unlimited
+    analytics: true,
+    advancedAnalytics: true,
+    whiteLabel: true,
+    removeWatermark: true,
+    passwordProtection: true,
+    expirationDate: true,
+    customScanLimit: true
+  }
+};
+
 // @desc    Get all users with their full details and created QR codes (admin only)
 // @route   GET /api/admin/users
 // @access  Admin
@@ -520,4 +568,228 @@ export const refreshUserSubscription = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription };
+// @desc    Update user subscription plan (admin only)
+// @route   PUT /api/admin/users/:userId/subscription
+// @access  Admin
+export const updateUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { planType, endDate, customFeatures } = req.body;
+
+    // Validate plan type
+    if (!['free', 'basic', 'pro', 'enterprise'].includes(planType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid plan type. Must be free, basic, pro, or enterprise'
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Calculate end date
+    let subscriptionEndDate = null;
+    if (planType !== 'free') {
+      if (endDate) {
+        subscriptionEndDate = new Date(endDate);
+        if (isNaN(subscriptionEndDate.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid end date format'
+          });
+        }
+      } else {
+        // Default to 1 year from now for paid plans
+        subscriptionEndDate = new Date();
+        subscriptionEndDate.setFullYear(subscriptionEndDate.getFullYear() + 1);
+      }
+    }
+
+    // Default plan features
+    const DEFAULT_PLAN_FEATURES = {
+      free: {
+        maxQRCodes: 5,
+        maxScansPerQR: 20,
+        analytics: false,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        removeWatermark: false,
+        passwordProtection: false,
+        expirationDate: false,
+        customScanLimit: false
+      },
+      basic: {
+        maxQRCodes: 50,
+        maxScansPerQR: 1000,
+        analytics: true,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        removeWatermark: false,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      },
+      pro: {
+        maxQRCodes: 200,
+        maxScansPerQR: 10000,
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      },
+      enterprise: {
+        maxQRCodes: -1, // Unlimited
+        maxScansPerQR: -1, // Unlimited
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
+    };
+
+    // Get plan features
+    const planFeatures = customFeatures || DEFAULT_PLAN_FEATURES[planType];
+
+    // Find or create subscription
+    let subscription = await Subscription.findOne({ userId });
+    
+    if (subscription) {
+      // Update existing subscription
+      subscription.planType = planType;
+      subscription.status = 'active';
+      subscription.features = planFeatures;
+      subscription.endDate = subscriptionEndDate;
+      subscription.startDate = new Date();
+      
+      // Reset trial fields for manual admin changes
+      subscription.isTrialSubscription = false;
+      subscription.trialStartDate = null;
+      subscription.trialEndDate = null;
+      
+      await subscription.save();
+    } else {
+      // Create new subscription
+      subscription = await Subscription.create({
+        userId,
+        planType,
+        status: 'active',
+        features: planFeatures,
+        startDate: new Date(),
+        endDate: subscriptionEndDate,
+        isTrialSubscription: false
+      });
+    }
+
+    // Update user record
+    user.subscriptionPlan = planType;
+    user.subscriptionStatus = 'active';
+    user.isOnTrial = false; // Admin changes override trial status
+    await user.save();
+
+    // Return updated user and subscription data
+    const updatedUserData = {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        isOnTrial: user.isOnTrial
+      },
+      subscription: {
+        planType: subscription.planType,
+        status: subscription.status,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate,
+        features: subscription.features
+      }
+    };
+
+    console.log(`Admin ${req.user.email} updated subscription for user ${user.email} to ${planType}`);
+
+    res.json({
+      success: true,
+      message: `User subscription updated to ${planType} plan successfully`,
+      data: updatedUserData
+    });
+
+  } catch (error) {
+    console.error('Update user subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating user subscription',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get user subscription details (admin only)
+// @route   GET /api/admin/users/:userId/subscription
+// @access  Admin
+export const getUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Find user
+    const user = await User.findById(userId).select('name email subscriptionPlan subscriptionStatus isOnTrial trialStartDate trialEndDate');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Find subscription
+    const subscription = await Subscription.findOne({ userId });
+    
+    const responseData = {
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        isOnTrial: user.isOnTrial,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate
+      },
+      subscription: subscription ? {
+        planType: subscription.planType,
+        status: subscription.status,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate,
+        isTrialSubscription: subscription.isTrialSubscription,
+        trialStartDate: subscription.trialStartDate,
+        trialEndDate: subscription.trialEndDate,
+        features: subscription.features
+      } : null
+    };
+
+    res.json({
+      success: true,
+      data: responseData
+    });
+
+  } catch (error) {
+    console.error('Get user subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving user subscription',
+      error: error.message
+    });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription };

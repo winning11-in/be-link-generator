@@ -70,6 +70,19 @@ const subscriptionSchema = new mongoose.Schema({
       default: false
     }
   },
+  // Trial tracking
+  isTrialSubscription: {
+    type: Boolean,
+    default: false
+  },
+  trialStartDate: {
+    type: Date,
+    default: null
+  },
+  trialEndDate: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -85,9 +98,27 @@ subscriptionSchema.pre('save', function() {
   this.updatedAt = new Date();
 });
 
+// Method to check if trial is active
+subscriptionSchema.methods.isTrialActive = function() {
+  if (!this.isTrialSubscription || !this.trialEndDate) {
+    return false;
+  }
+  return new Date() <= this.trialEndDate;
+};
+
+// Method to check if subscription is expired (including trial)
+subscriptionSchema.methods.isExpired = function() {
+  const now = new Date();
+  if (this.isTrialSubscription) {
+    return this.trialEndDate && now > this.trialEndDate;
+  }
+  return this.endDate && now > this.endDate;
+};
+
 // Index for efficient queries
 subscriptionSchema.index({ userId: 1 });
 subscriptionSchema.index({ status: 1, endDate: 1 });
+subscriptionSchema.index({ isTrialSubscription: 1, trialEndDate: 1 });
 
 const Subscription = mongoose.model('Subscription', subscriptionSchema);
 

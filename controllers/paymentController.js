@@ -224,14 +224,23 @@ export const verifyPayment = async (req, res) => {
       subscription.endDate = endDate;
       subscription.paymentId = payment._id;
       subscription.features = PLANS[payment.planType].features;
+      
+      // Clear trial fields when upgrading to paid plan
+      subscription.isTrialSubscription = false;
+      subscription.trialStartDate = null;
+      subscription.trialEndDate = null;
     }
 
     await subscription.save();
 
-    // Update user's subscription status
+    // Update user's subscription status and clear trial fields
     await User.findByIdAndUpdate(userId, {
       subscriptionPlan: payment.planType,
-      subscriptionStatus: 'active'
+      subscriptionStatus: 'active',
+      // Clear trial fields when upgrading to paid plan
+      isOnTrial: false,
+      trialStartDate: null,
+      trialEndDate: null
     });
 
     res.status(200).json({

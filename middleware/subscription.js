@@ -66,28 +66,65 @@ export const checkSubscriptionLimits = async (req, res, next) => {
     let planFeatures = DEFAULT_PLAN_FEATURES.free;
     
     if (subscription) {
-      // Check if subscription is expired
       const now = new Date();
-      const isExpired = subscription.endDate && subscription.endDate < now;
       
-      if (isExpired && subscription.planType !== 'free') {
-        console.log('Subscription expired, reverting to free plan');
-        // Update subscription to expired status
+      // Check if trial is expired
+      if (subscription.isTrialSubscription && subscription.trialEndDate && subscription.trialEndDate < now) {
+        console.log('Trial subscription expired, reverting to free plan');
+        
+        // Update subscription to expired trial and convert to free
         subscription.status = 'expired';
         subscription.planType = 'free';
+        subscription.isTrialSubscription = false;
         subscription.features = DEFAULT_PLAN_FEATURES.free;
+        subscription.endDate = null; // Free plan never expires
         await subscription.save();
         
         // Update user record
         if (user) {
           user.subscriptionPlan = 'free';
           user.subscriptionStatus = 'expired';
+          user.isOnTrial = false;
           await user.save();
         }
+        
+        // Auto-expire all QR codes for this user
+        await QRCode.updateMany(
+          { user: userId },
+          { status: 'inactive', expirationDate: now }
+        );
+        
+        currentPlan = 'free';
+        planFeatures = DEFAULT_PLAN_FEATURES.free;
+      } 
+      // Check if regular subscription is expired
+      else if (!subscription.isTrialSubscription && subscription.endDate && subscription.endDate < now) {
+        console.log('Regular subscription expired, reverting to free plan');
+        // Update subscription to expired status
+        subscription.status = 'expired';
+        subscription.planType = 'free';
+        subscription.features = DEFAULT_PLAN_FEATURES.free;
+        subscription.endDate = null;
+        await subscription.save();
+        
+        // Update user record
+        if (user) {
+          user.subscriptionPlan = 'free';
+          user.subscriptionStatus = 'expired';
+          user.isOnTrial = false;
+          await user.save();
+        }
+        
+        // Auto-expire all QR codes for this user
+        await QRCode.updateMany(
+          { user: userId },
+          { status: 'inactive', expirationDate: now }
+        );
         
         currentPlan = 'free';
         planFeatures = DEFAULT_PLAN_FEATURES.free;
       } else {
+        // Subscription is active (trial or paid)
         currentPlan = subscription.planType;
         planFeatures = subscription.features || DEFAULT_PLAN_FEATURES[currentPlan];
       }

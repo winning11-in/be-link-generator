@@ -96,23 +96,43 @@ export const signup = async (req, res) => {
     });
 
     if (user) {
-      // Create default free subscription for new user
+      // Create trial subscription for new user with pro features for 1 month
+      const trialStartDate = new Date();
+      const trialEndDate = new Date();
+      trialEndDate.setMonth(trialEndDate.getMonth() + 1); // Add 1 month
+
       await Subscription.create({
         userId: user._id,
-        planType: 'free',
+        planType: 'pro',
         status: 'active',
-        startDate: new Date(),
-        endDate: null, // Free plan never expires
+        isTrialSubscription: true,
+        trialStartDate,
+        trialEndDate,
+        startDate: trialStartDate,
+        endDate: trialEndDate,
         features: {
-          maxQRCodes: 5,
-          maxScansPerQR: 100,
-          analytics: false,
-          whiteLabel: false,
-          removeWatermark: false
+          maxQRCodes: 200,
+          maxScansPerQR: 10000,
+          analytics: true,
+          advancedAnalytics: true,
+          whiteLabel: true,
+          removeWatermark: true,
+          passwordProtection: true,
+          expirationDate: true,
+          customScanLimit: true
         }
       });
 
-      console.log('Created free subscription for new user:', user._id);
+      // Update user trial fields
+      user.trialStartDate = trialStartDate;
+      user.trialEndDate = trialEndDate;
+      user.hasUsedTrial = true;
+      user.isOnTrial = true;
+      user.subscriptionPlan = 'pro';
+      user.subscriptionStatus = 'active';
+      await user.save();
+
+      console.log('Created trial subscription for new user:', user._id);
 
       res.status(201).json({
         _id: user._id,
@@ -130,8 +150,11 @@ export const signup = async (req, res) => {
         removeWatermark: user.removeWatermark,
         watermarkText: user.watermarkText,
         whiteLabel: user.whiteLabel,
-        subscriptionPlan: 'free',
+        subscriptionPlan: 'pro',
         subscriptionStatus: 'active',
+        isOnTrial: true,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate,
         token: generateToken(user._id),
       });
     } else {
@@ -195,6 +218,11 @@ export const signin = async (req, res) => {
       removeWatermark: user.removeWatermark,
       watermarkText: user.watermarkText,
       whiteLabel: user.whiteLabel,
+      subscriptionPlan: user.subscriptionPlan,
+      subscriptionStatus: user.subscriptionStatus,
+      isOnTrial: user.isOnTrial || false,
+      trialStartDate: user.trialStartDate,
+      trialEndDate: user.trialEndDate,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -226,6 +254,11 @@ export const getProfile = async (req, res) => {
         removeWatermark: user.removeWatermark,
         watermarkText: user.watermarkText,
         whiteLabel: user.whiteLabel,
+        subscriptionPlan: user.subscriptionPlan,
+        subscriptionStatus: user.subscriptionStatus,
+        isOnTrial: user.isOnTrial || false,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate,
         createdAt: user.createdAt,
       });
     } else {

@@ -133,6 +133,23 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'inactive', 'expired', 'cancelled'],
       default: 'active',
     },
+    // Free trial tracking
+    trialStartDate: {
+      type: Date,
+      default: null,
+    },
+    trialEndDate: {
+      type: Date,
+      default: null,
+    },
+    hasUsedTrial: {
+      type: Boolean,
+      default: false,
+    },
+    isOnTrial: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

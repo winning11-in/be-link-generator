@@ -77,6 +77,8 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   
-  // Start scheduled cleanup of expired orders
+  // Start scheduled cleanup of expired orders, trials, and subscriptions
   scheduleCleanup();
+  console.log('✅ Trial system activated: New users get 1 month free pro features');
+  console.log('⏰ Cleanup tasks scheduled: Orders, trials, and subscription expiry');
 });
