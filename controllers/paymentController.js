@@ -65,6 +65,21 @@ const PLANS = {
       expirationDate: true,
       customScanLimit: true
     }
+  },
+  trial: {
+    name: 'Trial Plan',
+    price: 0, // Free trial
+    features: {
+      maxQRCodes: -1, // Unlimited
+      maxScansPerQR: -1, // Unlimited
+      analytics: true,
+      advancedAnalytics: true,
+      whiteLabel: true,
+      removeWatermark: true,
+      passwordProtection: true,
+      expirationDate: true,
+      customScanLimit: true
+    }
   }
 };
 

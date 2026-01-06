@@ -30,20 +30,19 @@ export const cleanupExpiredTrials = async () => {
   try {
     const now = new Date();
     
-    // Find all expired trials
+    // Find all expired trials (now using planType = 'trial')
     const expiredTrials = await Subscription.find({
-      isTrialSubscription: true,
+      planType: 'trial',
       trialEndDate: { $lt: now },
       status: { $ne: 'expired' }
     }).populate('userId');
 
     let updatedSubscriptions = 0;
     let updatedUsers = 0;
-    let expiredQRCodes = 0;
 
     for (const subscription of expiredTrials) {
       // Update subscription to free plan
-      subscription.status = 'expired';
+      subscription.status = 'active'; // Active free plan, not expired
       subscription.planType = 'free';
       subscription.isTrialSubscription = false;
       subscription.features = {
@@ -65,22 +64,18 @@ export const cleanupExpiredTrials = async () => {
       const user = await User.findById(subscription.userId);
       if (user) {
         user.subscriptionPlan = 'free';
-        user.subscriptionStatus = 'expired';
+        user.subscriptionStatus = 'active'; // Active on free plan
         user.isOnTrial = false;
         await user.save();
         updatedUsers++;
 
-        // Auto-expire all QR codes for this user
-        const qrResult = await QRCode.updateMany(
-          { user: user._id, status: 'active' },
-          { status: 'inactive', expirationDate: now }
-        );
-        expiredQRCodes += qrResult.modifiedCount;
+        // Keep QR codes active but they'll be limited by free plan limits
+        // Don't auto-expire them - let the user decide what to keep
       }
     }
     
-    console.log(`Cleanup: Updated ${updatedSubscriptions} expired trials, ${updatedUsers} users, expired ${expiredQRCodes} QR codes`);
-    return { subscriptions: updatedSubscriptions, users: updatedUsers, qrCodes: expiredQRCodes };
+    console.log(`Cleanup: Updated ${updatedSubscriptions} expired trials to free plan, ${updatedUsers} users updated`);
+    return { subscriptions: updatedSubscriptions, users: updatedUsers };
   } catch (error) {
     console.error('Error cleaning up expired trials:', error);
     throw error;

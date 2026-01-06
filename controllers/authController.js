@@ -96,14 +96,14 @@ export const signup = async (req, res) => {
     });
 
     if (user) {
-      // Create trial subscription for new user with pro features for 1 month
+      // Create trial subscription for new user with pro features for 3 months
       const trialStartDate = new Date();
       const trialEndDate = new Date();
-      trialEndDate.setMonth(trialEndDate.getMonth() + 1); // Add 1 month
+      trialEndDate.setMonth(trialEndDate.getMonth() + 3); // Add 3 months
 
       await Subscription.create({
         userId: user._id,
-        planType: 'pro',
+        planType: 'trial',  // Use proper trial plan type
         status: 'active',
         isTrialSubscription: true,
         trialStartDate,
@@ -111,8 +111,8 @@ export const signup = async (req, res) => {
         startDate: trialStartDate,
         endDate: trialEndDate,
         features: {
-          maxQRCodes: 200,
-          maxScansPerQR: 10000,
+          maxQRCodes: -1,        // Unlimited QR codes (above Enterprise)
+          maxScansPerQR: -1,     // Unlimited scans per QR (above Enterprise)
           analytics: true,
           advancedAnalytics: true,
           whiteLabel: true,
@@ -128,7 +128,7 @@ export const signup = async (req, res) => {
       user.trialEndDate = trialEndDate;
       user.hasUsedTrial = true;
       user.isOnTrial = true;
-      user.subscriptionPlan = 'pro';
+      user.subscriptionPlan = 'trial';  // Set to proper trial plan
       user.subscriptionStatus = 'active';
       await user.save();
 
