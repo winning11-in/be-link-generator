@@ -1,9 +1,42 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Payment from '../models/Payment.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
 import InvoiceGenerator from '../utils/invoiceGenerator.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load plan prices from config file
+export const loadPlanPrices = () => {
+  try {
+    const pricesPath = path.join(__dirname, '../config/planPrices.json');
+    const data = fs.readFileSync(pricesPath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Error loading plan prices:', error);
+    // Return default prices
+    return {
+      basic: { monthlyPrice: 149, yearlyPrice: 1700 },
+      pro: { monthlyPrice: 299, yearlyPrice: 3500 }
+    };
+  }
+};
+
+// Save plan prices to config file
+export const savePlanPrices = (prices) => {
+  try {
+    const pricesPath = path.join(__dirname, '../config/planPrices.json');
+    fs.writeFileSync(pricesPath, JSON.stringify(prices, null, 2));
+  } catch (error) {
+    console.error('Error saving plan prices:', error);
+    throw error;
+  }
+};
 
 // Initialize Razorpay instance only when needed
 const getRazorpayInstance = () => {
@@ -21,79 +54,83 @@ const getRazorpayInstance = () => {
 };
 
 // Pricing plans
-const PLANS = {
-  basic: {
-    name: 'Basic Plan',
-    monthlyPrice: 149, // ₹149
-    yearlyPrice: 1700, // ₹1700
-    features: {
-      maxQRCodes: 50,
-      maxScansPerQR: 1000,
-      analytics: true,
-      advancedAnalytics: false,
-      whiteLabel: false,
-      removeWatermark: false,
-      passwordProtection: true,
-      expirationDate: true,
-      customScanLimit: true
+const getAllPlans = () => {
+  const prices = loadPlanPrices();
+  return {
+    basic: {
+      name: 'Basic Plan',
+      monthlyPrice: prices.basic.monthlyPrice,
+      yearlyPrice: prices.basic.yearlyPrice,
+      features: {
+        maxQRCodes: 50,
+        maxScansPerQR: 1000,
+        analytics: true,
+        advancedAnalytics: false,
+        whiteLabel: false,
+        removeWatermark: false,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
+    },
+    pro: {
+      name: 'Pro Plan', 
+      monthlyPrice: prices.pro.monthlyPrice,
+      yearlyPrice: prices.pro.yearlyPrice,
+      features: {
+        maxQRCodes: 200,
+        maxScansPerQR: 10000,
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
+    },
+    enterprise: {
+      name: 'Enterprise Plan',
+      monthlyPrice: 0, // Contact support
+      yearlyPrice: 0, // Contact support
+      features: {
+        maxQRCodes: -1, // Unlimited
+        maxScansPerQR: -1, // Unlimited
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
+    },
+    trial: {
+      name: 'Trial Plan',
+      monthlyPrice: 0, // Free trial
+      yearlyPrice: 0, // Free trial
+      features: {
+        maxQRCodes: -1, // Unlimited
+        maxScansPerQR: -1, // Unlimited
+        analytics: true,
+        advancedAnalytics: true,
+        whiteLabel: true,
+        removeWatermark: true,
+        passwordProtection: true,
+        expirationDate: true,
+        customScanLimit: true
+      }
     }
-  },
-  pro: {
-    name: 'Pro Plan', 
-    monthlyPrice: 299, // ₹299
-    yearlyPrice: 3500, // ₹3500
-    features: {
-      maxQRCodes: 200,
-      maxScansPerQR: 10000,
-      analytics: true,
-      advancedAnalytics: true,
-      whiteLabel: true,
-      removeWatermark: true,
-      passwordProtection: true,
-      expirationDate: true,
-      customScanLimit: true
-    }
-  },
-  enterprise: {
-    name: 'Enterprise Plan',
-    monthlyPrice: 0, // Contact support
-    yearlyPrice: 0, // Contact support
-    features: {
-      maxQRCodes: -1, // Unlimited
-      maxScansPerQR: -1, // Unlimited
-      analytics: true,
-      advancedAnalytics: true,
-      whiteLabel: true,
-      removeWatermark: true,
-      passwordProtection: true,
-      expirationDate: true,
-      customScanLimit: true
-    }
-  },
-  trial: {
-    name: 'Trial Plan',
-    monthlyPrice: 0, // Free trial
-    yearlyPrice: 0, // Free trial
-    features: {
-      maxQRCodes: -1, // Unlimited
-      maxScansPerQR: -1, // Unlimited
-      analytics: true,
-      advancedAnalytics: true,
-      whiteLabel: true,
-      removeWatermark: true,
-      passwordProtection: true,
-      expirationDate: true,
-      customScanLimit: true
-    }
-  }
+  };
 };
 
 // Get available plans
 export const getPlans = (req, res) => {
   try {
+    const plans = getAllPlans();
     res.status(200).json({
       success: true,
-      plans: PLANS
+      plans: plans
     });
   } catch (error) {
     res.status(500).json({
@@ -110,6 +147,7 @@ export const createOrder = async (req, res) => {
     const { planType, duration = 1 } = req.body; // duration in months
     const userId = req.user.id;
 
+    const PLANS = getAllPlans();
     if (!PLANS[planType]) {
       return res.status(400).json({
         success: false,

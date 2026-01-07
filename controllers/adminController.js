@@ -5,6 +5,7 @@ import Payment from '../models/Payment.js';
 import AuditLog from '../models/AuditLog.js';
 import { cleanupExpiredOrders, getCleanupStats } from '../utils/cleanupTasks.js';
 import { logAdminAction } from '../utils/auditLogger.js';
+import { loadPlanPrices, savePlanPrices } from './paymentController.js';
 
 // Default plan features
 const DEFAULT_PLAN_FEATURES = {
@@ -923,4 +924,54 @@ export const getAuditLogs = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription, getAuditLogs };
+// Get plan prices
+export const getPlanPrices = async (req, res) => {
+  try {
+    const prices = loadPlanPrices();
+    res.json({
+      success: true,
+      prices
+    });
+  } catch (error) {
+    console.error('Admin getPlanPrices error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update plan prices
+export const updatePlanPrices = async (req, res) => {
+  try {
+    const { basic, pro } = req.body;
+
+    if (!basic || !pro || !basic.monthlyPrice || !basic.yearlyPrice || !pro.monthlyPrice || !pro.yearlyPrice) {
+      return res.status(400).json({ success: false, message: 'Invalid price data' });
+    }
+
+    const prices = {
+      basic: {
+        monthlyPrice: parseInt(basic.monthlyPrice),
+        yearlyPrice: parseInt(basic.yearlyPrice)
+      },
+      pro: {
+        monthlyPrice: parseInt(pro.monthlyPrice),
+        yearlyPrice: parseInt(pro.yearlyPrice)
+      }
+    };
+
+    savePlanPrices(prices);
+
+    // Log the action
+    await logAdminAction(req, 'UPDATE_PLAN_PRICES', null, null, { oldPrices: loadPlanPrices(), newPrices: prices });
+
+    res.json({
+      success: true,
+      message: 'Plan prices updated successfully',
+      prices
+    });
+  } catch (error) {
+    console.error('Admin updatePlanPrices error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription, getAuditLogs, getPlanPrices, updatePlanPrices };

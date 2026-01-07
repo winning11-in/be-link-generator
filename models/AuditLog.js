@@ -20,7 +20,8 @@ const auditLogSchema = new mongoose.Schema({
       'SUBSCRIPTION_UPDATED',
       'USER_SUBSCRIPTION_REFRESHED',
       'SYSTEM_CLEANUP',
-      'LIMITS_ENFORCED'
+      'LIMITS_ENFORCED',
+      'UPDATE_PLAN_PRICES'
     ]
   },
   targetUserId: {

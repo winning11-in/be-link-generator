@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllUsersData, blockUser, deleteUser, enforceUserLimits, getSystemStats, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription, getAuditLogs } from '../controllers/adminController.js';
+import { getAllUsersData, blockUser, deleteUser, enforceUserLimits, getSystemStats, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription, getAuditLogs, getPlanPrices, updatePlanPrices } from '../controllers/adminController.js';
 import adminMiddleware from '../middleware/adminMiddleware.js';
 
 const router = express.Router();
@@ -21,5 +21,9 @@ router.put('/users/:userId/subscription', adminMiddleware, updateUserSubscriptio
 
 // Audit logs endpoint
 router.get('/audit-logs', adminMiddleware, getAuditLogs);
+
+// Plan pricing endpoints
+router.get('/plan-prices', adminMiddleware, getPlanPrices);
+router.put('/plan-prices', adminMiddleware, updatePlanPrices);
 
 export default router;
