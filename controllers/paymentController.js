@@ -24,7 +24,8 @@ const getRazorpayInstance = () => {
 const PLANS = {
   basic: {
     name: 'Basic Plan',
-    price: 10, // ₹10
+    monthlyPrice: 149, // ₹149
+    yearlyPrice: 1700, // ₹1700
     features: {
       maxQRCodes: 50,
       maxScansPerQR: 1000,
@@ -39,7 +40,8 @@ const PLANS = {
   },
   pro: {
     name: 'Pro Plan', 
-    price: 15, // ₹15
+    monthlyPrice: 299, // ₹299
+    yearlyPrice: 3500, // ₹3500
     features: {
       maxQRCodes: 200,
       maxScansPerQR: 10000,
@@ -54,7 +56,8 @@ const PLANS = {
   },
   enterprise: {
     name: 'Enterprise Plan',
-    price: 12, // ₹12
+    monthlyPrice: 0, // Contact support
+    yearlyPrice: 0, // Contact support
     features: {
       maxQRCodes: -1, // Unlimited
       maxScansPerQR: -1, // Unlimited
@@ -69,7 +72,8 @@ const PLANS = {
   },
   trial: {
     name: 'Trial Plan',
-    price: 0, // Free trial
+    monthlyPrice: 0, // Free trial
+    yearlyPrice: 0, // Free trial
     features: {
       maxQRCodes: -1, // Unlimited
       maxScansPerQR: -1, // Unlimited
@@ -114,7 +118,23 @@ export const createOrder = async (req, res) => {
     }
 
     const plan = PLANS[planType];
-    const amount = plan.price * duration * 100; // Amount in paise
+    
+    // Enterprise plan requires contacting support
+    if (planType === 'enterprise') {
+      return res.status(400).json({
+        success: false,
+        message: 'Please contact support for enterprise pricing'
+      });
+    }
+    
+    let price;
+    if (duration === 12) {
+      price = plan.yearlyPrice;
+    } else {
+      price = plan.monthlyPrice;
+    }
+    
+    const amount = price * 100; // Amount in paise
     const currency = 'INR';
     // Create a short receipt (max 40 chars) using user ID substring and short timestamp
     const shortUserId = userId.slice(-8); // Last 8 chars of userId
