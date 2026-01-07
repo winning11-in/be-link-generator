@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import Payment from '../models/Payment.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
+import InvoiceGenerator from '../utils/invoiceGenerator.js';
 
 // Initialize Razorpay instance only when needed
 const getRazorpayInstance = () => {
@@ -463,5 +464,84 @@ export const refreshSubscription = async (req, res) => {
       message: 'Error refreshing subscription',
       error: error.message
     });
+  }
+};
+
+// @desc    Download invoice for a payment
+// @route   GET /api/payments/invoice/:paymentId
+// @access  Private
+export const downloadInvoice = async (req, res) => {
+  const { paymentId } = req.params;
+
+  // Find the payment
+  const payment = await Payment.findById(paymentId).populate({
+    path: 'userId',
+    select: 'name email',
+    strictPopulate: false
+  });
+
+  if (!payment) {
+    return res.status(404).json({
+      success: false,
+      message: 'Payment not found'
+    });
+  }
+
+  // Check if payment belongs to the authenticated user
+  if (payment.userId._id.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied'
+    });
+  }
+
+  // Only allow invoice download for successful payments
+  if (payment.status !== 'paid') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invoice is only available for successful payments'
+    });
+  }
+
+  // Generate professional PDF invoice using utility
+  const PDFDocument = (await import('pdfkit')).default;
+  const doc = new PDFDocument({
+    size: 'A4',
+    margin: 50,
+    bufferPages: true
+  });
+
+  try {
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${payment.orderId}.pdf"`);
+
+    // Pipe the PDF to the response
+    doc.pipe(res);
+
+    // Use the professional invoice generator
+    const invoiceGenerator = new InvoiceGenerator();
+    
+    const invoiceData = {
+      payment,
+      user: payment.userId
+    };
+
+    await invoiceGenerator.generateInvoice(doc, invoiceData);
+
+    // Finalize the PDF
+    doc.end();
+  } catch (error) {
+    console.error('Download invoice error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error generating invoice',
+        error: error.message
+      });
+    } else {
+      console.error('Error after headers sent:', error);
+      // Response might be partially sent, can't send error response
+    }
   }
 };

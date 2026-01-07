@@ -32,6 +32,11 @@ const subscriptionSchema = new mongoose.Schema({
     ref: 'Payment',
     default: null
   },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null // Null for automatic updates, admin ID for manual changes
+  },
   features: {
     maxQRCodes: {
       type: Number,

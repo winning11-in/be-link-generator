@@ -1354,12 +1354,504 @@ const accountNotificationTemplate = (title, message, type = 'info', actionUrl = 
 </html>`;
 };
 
+/**
+ * Professional Invoice Email Template
+ * Clean invoice design matching the provided specification
+ */
+const invoiceEmailTemplate = (invoiceData) => {
+  const {
+    invoiceNumber,
+    invoiceDate,
+    orderId,
+    customerName,
+    customerEmail,
+    description,
+    plan,
+    amount,
+    totalAmount,
+    paymentStatus = 'PAID'
+  } = invoiceData;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Invoice - QR Studio</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .email-wrapper {
+      max-width: 700px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    
+    .invoice-header {
+      background-color: #ffffff;
+      padding: 40px 40px 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .company-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    
+    .company-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      margin-right: 16px;
+    }
+    
+    .company-details h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+    
+    .company-tagline {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    .invoice-title {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .invoice-title h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: -0.5px;
+    }
+    
+    .invoice-body {
+      padding: 0 40px 40px;
+    }
+    
+    .invoice-details-section {
+      background-color: #f8fafc;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .section-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      color: #64748b;
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #334155;
+    }
+    
+    .invoice-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .meta-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    
+    .meta-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .bill-to-section {
+      margin-bottom: 32px;
+    }
+    
+    .bill-to-header {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 16px;
+    }
+    
+    .customer-info {
+      background-color: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .customer-name {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .customer-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+    
+    .customer-details h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 2px;
+    }
+    
+    .customer-email {
+      font-size: 14px;
+      color: #64748b;
+    }
+    
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .invoice-table thead {
+      background-color: #f8fafc;
+    }
+    
+    .invoice-table th {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .invoice-table td {
+      padding: 20px;
+      font-size: 14px;
+      color: #374151;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .invoice-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .description-cell {
+      font-weight: 500;
+      color: #1f2937;
+    }
+    
+    .plan-cell {
+      color: #6b7280;
+    }
+    
+    .amount-cell {
+      font-weight: 600;
+      color: #1f2937;
+      text-align: right;
+    }
+    
+    .total-section {
+      text-align: right;
+      margin-bottom: 24px;
+    }
+    
+    .total-row {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .total-label {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-right: 32px;
+    }
+    
+    .total-amount {
+      font-size: 24px;
+      font-weight: 700;
+      color: #059669;
+    }
+    
+    .payment-status {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 32px;
+    }
+    
+    .status-badge {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .thank-you-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .thank-you-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    
+    .support-info {
+      font-size: 14px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    
+    .support-email {
+      color: #059669;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .invoice-footer {
+      background-color: #f8fafc;
+      padding: 32px 40px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+    
+    .footer-text {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    
+    .footer-email {
+      font-size: 12px;
+      color: #374151;
+      font-weight: 500;
+    }
+    
+    @media only screen and (max-width: 768px) {
+      .email-wrapper {
+        margin: 20px;
+        border-radius: 12px;
+      }
+      
+      .invoice-header, .invoice-body, .invoice-footer {
+        padding: 24px !important;
+      }
+      
+      .invoice-meta {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      
+      .company-info {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+      
+      .company-logo {
+        margin-right: 0;
+        margin-bottom: 12px;
+      }
+      
+      .invoice-table th,
+      .invoice-table td {
+        padding: 12px 16px !important;
+        font-size: 13px !important;
+      }
+      
+      .total-row {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+      
+      .total-label {
+        margin-right: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="company-info">
+        <img src="https://res.cloudinary.com/dj3xx136b/image/upload/v1767616557/tohynya5xavebftekbwr.png" alt="QR Studio" class="company-logo">
+        <div class="company-details">
+          <h1>QR Studio</h1>
+          <div class="company-tagline">Digital Solutions Provider</div>
+        </div>
+      </div>
+      
+      <div class="invoice-title">
+        <h2>INVOICE</h2>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="invoice-body">
+      <!-- Invoice Details -->
+      <div class="invoice-details-section">
+        <div class="section-header">
+          <svg class="section-icon" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+          </svg>
+          <div class="section-title">Invoice Details</div>
+        </div>
+        
+        <div class="invoice-meta">
+          <div class="meta-item">
+            <div class="meta-label">Invoice Number:</div>
+            <div class="meta-value">\${invoiceNumber}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Invoice Date:</div>
+            <div class="meta-value">\${invoiceDate}</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Order ID:</div>
+            <div class="meta-value">\${orderId}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bill To -->
+      <div class="bill-to-section">
+        <h3 class="bill-to-header">Bill To:</h3>
+        <div class="customer-info">
+          <div class="customer-name">
+            <div class="customer-avatar">\${customerName.charAt(0).toUpperCase()}</div>
+            <div class="customer-details">
+              <h3>\${customerName}</h3>
+              <div class="customer-email">\${customerEmail}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Table -->
+      <table class="invoice-table">
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Plan</th>
+            <th style="text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="description-cell">\${description}</td>
+            <td class="plan-cell">\${plan}</td>
+            <td class="amount-cell">$\${amount}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Total -->
+      <div class="total-section">
+        <div class="total-row">
+          <div class="total-label">Total Amount:</div>
+          <div class="total-amount">$\${totalAmount}</div>
+        </div>
+      </div>
+
+      <!-- Payment Status -->
+      <div class="payment-status">
+        <div class="status-badge">Payment Status: \${paymentStatus}</div>
+      </div>
+
+      <!-- Thank You -->
+      <div class="thank-you-section">
+        <h3 class="thank-you-title">Thank you for your business!</h3>
+        <p class="support-info">
+          For any queries, please contact<br>
+          <a href="mailto:support@qrstudio.com" class="support-email">support@qrstudio.com</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+      <div class="footer-text">© 2026 QR Studio. All rights reserved.</div>
+      <div class="footer-email">winning11.in@gmail.com</div>
+    </div>
+  </div>
+</body>
+</html>`;
+};
+
 // Export all templates
 export {
   passwordResetOTPTemplate,
   emailVerificationTemplate,
   welcomeEmailTemplate,
   accountNotificationTemplate,
+  invoiceEmailTemplate,
   getCurrentDate,
   getRequestInfo
 };

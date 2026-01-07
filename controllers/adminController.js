@@ -2,7 +2,9 @@ import User from '../models/User.js';
 import QRCode from '../models/QRCode.js';
 import Subscription from '../models/Subscription.js';
 import Payment from '../models/Payment.js';
+import AuditLog from '../models/AuditLog.js';
 import { cleanupExpiredOrders, getCleanupStats } from '../utils/cleanupTasks.js';
+import { logAdminAction } from '../utils/auditLogger.js';
 
 // Default plan features
 const DEFAULT_PLAN_FEATURES = {
@@ -127,6 +129,15 @@ export const blockUser = async (req, res) => {
 
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Log the action
+    await logAdminAction(
+      req,
+      blocked ? 'USER_BLOCKED' : 'USER_UNBLOCKED',
+      userId,
+      user.email,
+      { previousState: !blocked, newState: blocked }
+    );
+
     return res.json({ success: true, user });
   } catch (error) {
     console.error('Admin blockUser error:', error);
@@ -148,6 +159,15 @@ export const deleteUser = async (req, res) => {
     await Subscription.deleteOne({ userId });
 
     await User.findByIdAndDelete(userId);
+
+    // Log the action
+    await logAdminAction(
+      req,
+      'USER_DELETED',
+      userId,
+      user.email,
+      { qrCodesDeleted: true, subscriptionDeleted: true }
+    );
 
     return res.json({ success: true, message: 'User deleted' });
   } catch (error) {
@@ -263,6 +283,20 @@ export const enforceUserLimits = async (req, res) => {
       response.message = 'Dry run completed. Set dryRun=false to apply fixes.';
     } else {
       response.message = 'Limits enforced successfully.';
+      
+      // Log the action
+      await logAdminAction(
+        req,
+        'LIMITS_ENFORCED',
+        null,
+        null,
+        {
+          dryRun: false,
+          totalUsers: users.length,
+          usersWithIssues: issues.length,
+          fixesApplied: fixes.length
+        }
+      );
     }
     
     res.status(200).json(response);
@@ -458,6 +492,19 @@ export const cleanupOrders = async (req, res) => {
     const deletedCount = await cleanupExpiredOrders();
     const statsAfter = await getCleanupStats();
     
+    // Log the action
+    await logAdminAction(
+      req,
+      'SYSTEM_CLEANUP',
+      null,
+      null,
+      {
+        deletedCount,
+        statsBefore,
+        statsAfter
+      }
+    );
+    
     res.json({
       success: true,
       message: `Cleanup completed. Removed ${deletedCount} expired orders.`,
@@ -547,6 +594,18 @@ export const refreshUserSubscription = async (req, res) => {
     const oldFeatures = subscription.features;
     subscription.features = PLAN_FEATURES[subscription.planType] || PLAN_FEATURES.free;
     await subscription.save();
+    
+    // Log the action
+    await logAdminAction(
+      req,
+      'USER_SUBSCRIPTION_REFRESHED',
+      userId,
+      user.email,
+      {
+        planType: subscription.planType,
+        featuresRefreshed: true
+      }
+    );
     
     res.json({
       success: true,
@@ -672,6 +731,7 @@ export const updateUserSubscription = async (req, res) => {
       subscription.features = planFeatures;
       subscription.endDate = subscriptionEndDate;
       subscription.startDate = new Date();
+      subscription.updatedBy = req.user._id;
       
       // Reset trial fields for manual admin changes
       subscription.isTrialSubscription = false;
@@ -688,7 +748,8 @@ export const updateUserSubscription = async (req, res) => {
         features: planFeatures,
         startDate: new Date(),
         endDate: subscriptionEndDate,
-        isTrialSubscription: false
+        isTrialSubscription: false,
+        updatedBy: req.user._id
       });
     }
 
@@ -718,6 +779,20 @@ export const updateUserSubscription = async (req, res) => {
     };
 
     console.log(`Admin ${req.user.email} updated subscription for user ${user.email} to ${planType}`);
+
+    // Log the action
+    await logAdminAction(
+      req,
+      'SUBSCRIPTION_UPDATED',
+      userId,
+      user.email,
+      {
+        previousPlan: user.subscriptionPlan,
+        newPlan: planType,
+        endDate: subscriptionEndDate,
+        customFeatures: !!customFeatures
+      }
+    );
 
     res.json({
       success: true,
@@ -792,4 +867,60 @@ export const getUserSubscription = async (req, res) => {
   }
 };
 
-export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription };
+export const getAuditLogs = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const action = req.query.action;
+    const adminId = req.query.adminId;
+    const targetUserId = req.query.targetUserId;
+    const search = (req.query.search || '').trim();
+
+    const filter = {};
+    
+    if (action) {
+      filter.action = action;
+    }
+    
+    if (adminId) {
+      filter.adminId = adminId;
+    }
+    
+    if (targetUserId) {
+      filter.targetUserId = targetUserId;
+    }
+    
+    if (search) {
+      filter.$or = [
+        { adminEmail: { $regex: search, $options: 'i' } },
+        { targetUserEmail: { $regex: search, $options: 'i' } },
+        { 'details.planType': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const total = await AuditLog.countDocuments(filter);
+
+    const logs = await AuditLog.find(filter)
+      .populate('adminId', 'name email')
+      .populate('targetUserId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    return res.json({
+      success: true,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      count: logs.length,
+      data: logs,
+    });
+  } catch (error) {
+    console.error('Admin getAuditLogs error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export default { getAllUsersData, blockUser, deleteUser, getSubscriptionsData, cleanupOrders, refreshUserSubscription, updateUserSubscription, getUserSubscription, getAuditLogs };

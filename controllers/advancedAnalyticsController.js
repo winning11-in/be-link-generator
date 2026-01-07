@@ -34,21 +34,57 @@ export const getAllAdvancedAnalytics = async (req, res) => {
       timestamp: scan.createdAt,
     }));
 
-    const cityStats = await Scan.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: {
-            city: '$location.city',
-            country: '$location.country',
-            lat: '$location.latitude',
-            lng: '$location.longitude',
+    // Run aggregations in parallel for better performance
+    const [cityStats, hourlyStats, dailyStats, heatmapMatrix] = await Promise.all([
+      Scan.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: {
+              city: '$location.city',
+              country: '$location.country',
+              lat: '$location.latitude',
+              lng: '$location.longitude',
+            },
+            count: { $sum: 1 },
           },
-          count: { $sum: 1 },
         },
-      },
-      { $sort: { count: -1 } },
-      { $limit: 100 },
+        { $sort: { count: -1 } },
+        { $limit: 100 },
+      ]),
+      Scan.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: { $hour: '$createdAt' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Scan.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: { $dayOfWeek: '$createdAt' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
+      Scan.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: {
+              hour: { $hour: '$createdAt' },
+              day: { $dayOfWeek: '$createdAt' },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { '_id.day': 1, '_id.hour': 1 } },
+      ]),
     ]);
 
     const cityData = cityStats.map(stat => ({
@@ -58,43 +94,6 @@ export const getAllAdvancedAnalytics = async (req, res) => {
       lng: stat._id.lng,
       count: stat.count,
     }));
-
-    // === PEAK TIMES DATA ===
-    const hourlyStats = await Scan.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: { $hour: '$createdAt' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    const dailyStats = await Scan.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: { $dayOfWeek: '$createdAt' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
-
-    const heatmapMatrix = await Scan.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: {
-            hour: { $hour: '$createdAt' },
-            day: { $dayOfWeek: '$createdAt' },
-          },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { '_id.day': 1, '_id.hour': 1 } },
-    ]);
 
     const hourlyData = Array.from({ length: 24 }, (_, i) => ({
       hour: i,
@@ -145,40 +144,41 @@ export const getAllAdvancedAnalytics = async (req, res) => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const dailyRetention = await Scan.aggregate([
-      { $match: { ...query, createdAt: { $gte: thirtyDaysAgo } } },
-      {
-        $group: {
-          _id: {
-            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-            ip: '$ip',
+    // Run remaining aggregations in parallel
+    const [dailyRetention, referrerStats] = await Promise.all([
+      Scan.aggregate([
+        { $match: { ...query, createdAt: { $gte: thirtyDaysAgo } } },
+        {
+          $group: {
+            _id: {
+              date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+              ip: '$ip',
+            },
           },
         },
-      },
-      {
-        $group: {
-          _id: '$_id.date',
-          uniqueUsers: { $sum: 1 },
+        {
+          $group: {
+            _id: '$_id.date',
+            uniqueUsers: { $sum: 1 },
+          },
         },
-      },
-      { $sort: { _id: 1 } },
+        { $sort: { _id: 1 } },
+      ]),
+      Scan.aggregate([
+        { $match: query },
+        {
+          $group: {
+            _id: '$referrer',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+      ]),
     ]);
 
     const repeatScanners = Array.from(ipScanCount.values()).filter(count => count > 1).length;
     const repeatRate = uniqueScanners > 0 ? (repeatScanners / uniqueScanners) * 100 : 0;
-
-    // === REFERRER DATA ===
-    const referrerStats = await Scan.aggregate([
-      { $match: query },
-      {
-        $group: {
-          _id: '$referrer',
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-    ]);
 
     const categorized = {
       direct: 0,
