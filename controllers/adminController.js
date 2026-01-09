@@ -927,7 +927,7 @@ export const getAuditLogs = async (req, res) => {
 // Get plan prices
 export const getPlanPrices = async (req, res) => {
   try {
-    const prices = loadPlanPrices();
+    const prices = await loadPlanPrices();
     res.json({
       success: true,
       prices
@@ -958,10 +958,10 @@ export const updatePlanPrices = async (req, res) => {
       }
     };
 
-    savePlanPrices(prices);
+    await savePlanPrices(prices);
 
     // Log the action
-    await logAdminAction(req, 'UPDATE_PLAN_PRICES', null, null, { oldPrices: loadPlanPrices(), newPrices: prices });
+    await logAdminAction(req, 'UPDATE_PLAN_PRICES', null, null, { oldPrices: await loadPlanPrices(), newPrices: prices });
 
     res.json({
       success: true,

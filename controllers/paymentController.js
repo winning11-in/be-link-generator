@@ -6,17 +6,38 @@ import { fileURLToPath } from 'url';
 import Payment from '../models/Payment.js';
 import Subscription from '../models/Subscription.js';
 import User from '../models/User.js';
+import PlanPrices from '../models/PlanPrices.js';
 import InvoiceGenerator from '../utils/invoiceGenerator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load plan prices from config file
-export const loadPlanPrices = () => {
+// Load plan prices from database
+export const loadPlanPrices = async () => {
   try {
-    const pricesPath = path.join(__dirname, '../config/planPrices.json');
-    const data = fs.readFileSync(pricesPath, 'utf8');
-    return JSON.parse(data);
+    const prices = await PlanPrices.find({});
+    const priceMap = {};
+
+    prices.forEach(price => {
+      priceMap[price.planType] = {
+        monthlyPrice: price.monthlyPrice,
+        yearlyPrice: price.yearlyPrice
+      };
+    });
+
+    // If no prices in DB, return defaults and initialize DB
+    if (Object.keys(priceMap).length === 0) {
+      const defaultPrices = {
+        basic: { monthlyPrice: 149, yearlyPrice: 1700 },
+        pro: { monthlyPrice: 299, yearlyPrice: 3500 }
+      };
+
+      // Initialize database with default prices
+      await initializeDefaultPrices(defaultPrices);
+      return defaultPrices;
+    }
+
+    return priceMap;
   } catch (error) {
     console.error('Error loading plan prices:', error);
     // Return default prices
@@ -27,11 +48,42 @@ export const loadPlanPrices = () => {
   }
 };
 
-// Save plan prices to config file
-export const savePlanPrices = (prices) => {
+// Initialize default prices in database
+const initializeDefaultPrices = async (prices) => {
   try {
-    const pricesPath = path.join(__dirname, '../config/planPrices.json');
-    fs.writeFileSync(pricesPath, JSON.stringify(prices, null, 2));
+    const pricePromises = Object.entries(prices).map(([planType, priceData]) =>
+      PlanPrices.findOneAndUpdate(
+        { planType },
+        {
+          planType,
+          monthlyPrice: priceData.monthlyPrice,
+          yearlyPrice: priceData.yearlyPrice
+        },
+        { upsert: true, new: true }
+      )
+    );
+    await Promise.all(pricePromises);
+    console.log('Default plan prices initialized in database');
+  } catch (error) {
+    console.error('Error initializing default prices:', error);
+  }
+};
+
+// Save plan prices to database
+export const savePlanPrices = async (prices) => {
+  try {
+    const pricePromises = Object.entries(prices).map(([planType, priceData]) =>
+      PlanPrices.findOneAndUpdate(
+        { planType },
+        {
+          planType,
+          monthlyPrice: priceData.monthlyPrice,
+          yearlyPrice: priceData.yearlyPrice
+        },
+        { upsert: true, new: true }
+      )
+    );
+    await Promise.all(pricePromises);
   } catch (error) {
     console.error('Error saving plan prices:', error);
     throw error;
@@ -54,8 +106,8 @@ const getRazorpayInstance = () => {
 };
 
 // Pricing plans
-const getAllPlans = () => {
-  const prices = loadPlanPrices();
+const getAllPlans = async () => {
+  const prices = await loadPlanPrices();
   return {
     basic: {
       name: 'Basic Plan',
@@ -125,9 +177,9 @@ const getAllPlans = () => {
 };
 
 // Get available plans
-export const getPlans = (req, res) => {
+export const getPlans = async (req, res) => {
   try {
-    const plans = getAllPlans();
+    const plans = await getAllPlans();
     res.status(200).json({
       success: true,
       plans: plans
@@ -147,7 +199,7 @@ export const createOrder = async (req, res) => {
     const { planType, duration = 1 } = req.body; // duration in months
     const userId = req.user.id;
 
-    const PLANS = getAllPlans();
+    const PLANS = await getAllPlans();
     if (!PLANS[planType]) {
       return res.status(400).json({
         success: false,
