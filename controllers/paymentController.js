@@ -546,8 +546,10 @@ export const refreshSubscription = async (req, res) => {
       });
     }
 
-    // Update subscription features with correct plan features
-    subscription.features = PLANS[subscription.planType]?.features || {
+    // Load current plans and update subscription features accordingly
+    const PLANS = await getAllPlans();
+
+    subscription.features = (PLANS && PLANS[subscription.planType]?.features) || {
       maxQRCodes: 5,
       maxScansPerQR: 100,
       analytics: false,

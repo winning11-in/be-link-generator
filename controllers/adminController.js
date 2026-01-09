@@ -958,15 +958,33 @@ export const updatePlanPrices = async (req, res) => {
       }
     };
 
+    // Capture previous prices so logs are accurate
+    const oldPrices = await loadPlanPrices();
+
+    // Save new prices to DB
     await savePlanPrices(prices);
 
-    // Log the action
-    await logAdminAction(req, 'UPDATE_PLAN_PRICES', null, null, { oldPrices: await loadPlanPrices(), newPrices: prices });
+    // Refresh subscription features for all users to ensure consistency
+    const subscriptions = await Subscription.find({});
+    let updatedCount = 0;
+
+    for (const sub of subscriptions) {
+      const planFeatures = DEFAULT_PLAN_FEATURES[sub.planType] || DEFAULT_PLAN_FEATURES.free;
+      if (JSON.stringify(sub.features) !== JSON.stringify(planFeatures)) {
+        sub.features = planFeatures;
+        await sub.save();
+        updatedCount++;
+      }
+    }
+
+    // Log the action with both old and new prices and metadata about subscription updates
+    await logAdminAction(req, 'UPDATE_PLAN_PRICES', null, null, { oldPrices, newPrices: prices, subscriptionsUpdated: updatedCount });
 
     res.json({
       success: true,
       message: 'Plan prices updated successfully',
-      prices
+      prices,
+      subscriptionsUpdated: updatedCount
     });
   } catch (error) {
     console.error('Admin updatePlanPrices error:', error);
