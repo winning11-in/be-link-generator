@@ -478,6 +478,44 @@ export const googleAuth = async (req, res) => {
         isVerified: true, // Google accounts are pre-verified
         profilePicture: payload.picture, // Store in both fields for consistency
       });
+
+      // Create trial subscription for new Google user with pro features for 3 months
+      const trialStartDate = new Date();
+      const trialEndDate = new Date();
+      trialEndDate.setMonth(trialEndDate.getMonth() + 3); // Add 3 months
+
+      await Subscription.create({
+        userId: user._id,
+        planType: 'trial',  // Use proper trial plan type
+        status: 'active',
+        isTrialSubscription: true,
+        trialStartDate,
+        trialEndDate,
+        startDate: trialStartDate,
+        endDate: trialEndDate,
+        features: {
+          maxQRCodes: -1,        // Unlimited QR codes (above Enterprise)
+          maxScansPerQR: -1,     // Unlimited scans per QR (above Enterprise)
+          analytics: true,
+          advancedAnalytics: true,
+          whiteLabel: true,
+          removeWatermark: true,
+          passwordProtection: true,
+          expirationDate: true,
+          customScanLimit: true
+        }
+      });
+
+      // Update user trial fields
+      user.trialStartDate = trialStartDate;
+      user.trialEndDate = trialEndDate;
+      user.hasUsedTrial = true;
+      user.isOnTrial = true;
+      user.subscriptionPlan = 'trial';  // Set to proper trial plan
+      user.subscriptionStatus = 'active';
+      await user.save();
+
+      console.log('Created trial subscription for new Google user:', user._id);
     } else {
       // User exists - update Google info if not already set
       if (!user.googleId) {
@@ -514,6 +552,11 @@ export const googleAuth = async (req, res) => {
       watermarkText: user.watermarkText,
       whiteLabel: user.whiteLabel,
       isVerified: user.isVerified,
+      subscriptionPlan: user.subscriptionPlan,
+      subscriptionStatus: user.subscriptionStatus,
+      isOnTrial: user.isOnTrial || false,
+      trialStartDate: user.trialStartDate,
+      trialEndDate: user.trialEndDate,
       token: generateToken(user._id),
     });
   } catch (error) {
