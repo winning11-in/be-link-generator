@@ -289,6 +289,8 @@ export const verifyPayment = async (req, res) => {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const userId = req.user.id;
 
+    const PLANS = await getAllPlans();
+
     // Find the payment record
     const payment = await Payment.findOne({ 
       orderId: razorpay_order_id,
